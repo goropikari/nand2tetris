@@ -1,0 +1,51 @@
+\documentclass[dvipdfmx]{ujarticle}
+\usepackage[left=2.00cm, right=2.00cm, top=2.50cm, bottom=2.00cm]{geometry} % 修論の既定
+
+\usepackage{amsmath,amssymb}
+\begin{document}
+
+\textbf{1.1.1 Boolean Algebra}
+\begin{align*}
+    x ~\mathrm{or}~ y & = \bar{x}y + x\bar{y} + xy \\
+    &                   = \bar{x}y + x(y + \bar{y}) \\
+    &                   = x + \bar{x}y \\
+    &                   = x + \overline{ x + \bar{y} } \\
+    &                   = \overline{ \overline{ x + \overline{(x + y) } } } \\
+    &                   = \overline{\bar{x} (x + \bar{y} ) } \text{~ ~ ~ where } \overline{x + y} = \bar{x} \bar{y} \\
+    &                   = \overline{ x\bar{x} + \bar{x}\bar{y} } \\
+    &                   = \overline{ \bar{x} \bar{y} } \\
+    &                   = \overline{\overline{x + y}} \\
+    &                   = x + y \\
+%
+%
+    \text{if } y \text{ then } x & = \bar{x}\bar{y} + x \bar{y} + xy \\
+    &                              = \bar{x}\bar{y} + x(y + \bar{y}) \\
+    &                              = x + \bar{x}\bar{y} \\
+    &                              = x + \overline{x + y} \\
+    &                              = \overline{ \overline{ x + \overline{x + y} } } \\
+    &                              = \overline{ \bar{x}(x + y) } \\
+    &                              = \overline{ x\bar{x} + \bar{x}y } \\
+    &                              = \overline{ \bar{x}y } \\
+    &                              = x + \bar{y} \\
+%
+%
+    \text{if } x \text{ then } y & = \bar{x}\bar{y} + \bar{x}y + xy \\
+    &                              = \bar{x}\bar{y} + (x + \bar{x}) y \\
+    &                              = \bar{x}\bar{y} + y \\
+    &                              = \overline{x + y} + y \\
+    &                              = \overline{ \overline{ \overline{x + y} + y} } \\
+    &                              = \overline{ (x + y) \bar{y} } \\
+    &                              = \overline{ x\bar{y} + y\bar{y} } \\
+    &                              = \overline{ x \bar{y} } \\
+    &                              = \bar{x} + y \\
+%
+%
+    x \text{ nand } y & = \bar{x}\bar{y} + \bar{x}y + x \bar{y} \\
+    &                   = \bar{y}(x + \bar{x}) + \bar{x} y \\
+    &                   = \bar{y} + \bar{x} y \\
+    &                   = \bar{x} + \bar{y} \text{~ ~ ~ where } x + y    = x + \bar{x}y \\
+    &                   = \overline{ \overline{ \bar{x} + \bar{y} } } \\
+    &                   = \overline{ xy }
+\end{align*}
+
+\end{document}
