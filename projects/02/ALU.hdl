@@ -53,11 +53,10 @@ CHIP ALU {
     Mux16(a=xandy, b=xaddy, sel=f, out=out0); // if (f == 1)  set out = x + y
                                              // else set out = x & y
     Not16(in=out0, out=notout0);
-    Mux16(a=out0, b=notout0, sel=no, out[0..7]=out10, out[8..14]=out11, out[15]=neg); // if (no == 1) set out = !out
-    And16(a[0..7]=out10, a[8..14]=out11, a[15]=neg, b=true, out=out);
+    Mux16(a=out0, b=notout0, sel=no, out[0..7]=out10, out[8..15]=out11, out[15]=isneg, out=out); // if (no == 1) set out = !out
     Or8Way(in=out10, out=outzero0);
-    Or8Way(in=out10, out=outzero1);
+    Or8Way(in=out11, out=outzero1);
     Or(a=outzero0, b=outzero1, out=outzero);
     Mux(a=true, b=false, sel=outzero, out=zr); // 1 if (out == 0), 0 otherwise
-    Mux(a=false, b=true, sel=neg, out=ng); // 1 if (out < 0),  0 otherwise
+    Mux(a=false, b=true, sel=isneg, out=ng); // 1 if (out < 0),  0 otherwise
 }
