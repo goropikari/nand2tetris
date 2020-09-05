@@ -1,2 +1,9 @@
-alias l=ls
-alias ls='ls --color -ph'
+alias ls='ls --color=auto -p'
+alias l='ls'
+alias la='ls -a'
+alias ll='ls -l'
+alias lla='ls -la'
+alias rm='rm -i'
+alias gst='git status'
+alias gb='git branch'
+bind '"\e[A": history-search-backward'
