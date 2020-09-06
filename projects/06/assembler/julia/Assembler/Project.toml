@@ -1,0 +1,7 @@
+name = "Assembler"
+uuid = "4b8bc90e-70f9-40f5-a5c4-00e9affc1a4b"
+authors = ["goropikari <goropikari56@gmail.com>"]
+version = "0.1.0"
+
+[compat]
+julia = "1.5"

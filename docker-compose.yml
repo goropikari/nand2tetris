@@ -14,3 +14,14 @@ services:
 
     tty: true
     stdin_open: true
+
+  julia:
+    build:
+      context: .
+      dockerfile: Dockerfile-julia
+
+    volumes:
+      - .:/home/julia
+
+    working_dir: /home/julia
+    user: julia

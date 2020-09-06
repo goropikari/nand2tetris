@@ -1,0 +1,5 @@
+FROM julia:1.5.1
+
+RUN useradd -g users -G sudo -m -s /bin/bash julia
+
+USER julia

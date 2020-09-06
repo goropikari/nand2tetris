@@ -14,3 +14,11 @@ $ docker-compose run ubuntu bash
 # In container
 $ bash tools/HardwareSimulator.sh
 ```
+
+
+## My Assembler (project06)
+
+```
+docker-compose run julia bash
+julia projects/06/assembler/julia/Assembler/Assembler.jl projects/06/rect/RectL.asm
+```
