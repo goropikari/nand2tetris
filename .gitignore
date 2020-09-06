@@ -5,3 +5,9 @@
 .sudo_as_admin_successful
 .viminfo
 *.out
+*.fls
+.texlive*
+*.log
+*.fdb_latexmk
+*.hack
+*.dat
