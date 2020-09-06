@@ -1,10 +1,17 @@
-\documentclass[dvipdfmx]{ujarticle}
-\usepackage[left=2.00cm, right=2.00cm, top=2.50cm, bottom=2.00cm]{geometry} % 修論の既定
+\documentclass[a4paper]{book}
+\usepackage[left=2.00cm, right=2.00cm, top=2.50cm, bottom=2.00cm]{geometry}
 
 \usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+
+% figure position
+\usepackage{booktabs}
+\usepackage{here}
+
 \begin{document}
 
-\textbf{1.1.1 Boolean Algebra}
+\chapter{Boolean Logic}
+\textbf{Boolean Algebra}
 \begin{align*}
     x ~\mathrm{or}~ y & = \bar{x}y + x\bar{y} + xy \\
     &                   = \bar{x}y + x(y + \bar{y}) \\
@@ -47,5 +54,102 @@
     &                   = \overline{ \overline{ \bar{x} + \bar{y} } } \\
     &                   = \overline{ xy }
 \end{align*}
+
+
+
+
+
+
+
+\setcounter{chapter}{4}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Computer Architecture}
+
+
+
+
+\section{Memory}
+\begin{figure}[H]
+    \centering
+    \includegraphics{pic/project05/memory.png}
+    \caption{memory}
+\end{figure}
+
+
+\section{CPU}
+
+$\text{C-instruction} = 111a c_1 c_2 c_3 c_4 c_5 c_6 d_1 d_2 d_3 j_1 j_2 j_3$
+
+\begin{itemize}
+    \item $d_1$: destination A
+    \item $d_2$: destination D
+    \item $d_3$: destination M
+\end{itemize}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics{pic/project05/cpu1.png}
+    \caption{memory}
+\end{figure}
+
+\begin{align*}
+    \text{cond1} & = \text{instruction}[15] \\
+    \text{cond2} & = (\text{not } \text{instruction}[15]) \text{ or } (\text{instruction}[15] \text{ and } \text{instruction}[5]) \\
+    \text{cond3} & = \text{instruction}[15] \text{ and } \text{ not } \text{instruction}[12]
+\end{align*}
+
+\begin{itemize}
+    \item instruction[15]: opcode
+    \item instruction[12]: C-instruction's $a$. If $a$ is $1$, comp includes A, otherwise, comp includes M.
+    \item instruction[5]: destination A.
+\end{itemize}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics{pic/project05/cpu2.png}
+    \caption{memory}
+\end{figure}
+
+\begin{align*}
+    \text{cond4} & = \text{instruction}[15] \text{ and } \text{instruction}[4] \\
+    \text{cond5} & = \begin{cases}
+                        \text{zx} = \text{instruction}[11] = c_1 \\
+                        \text{nx} = \text{instruction}[10] = c_2 \\
+                        \text{zy} = \text{instruction}[9] = c_3 \\
+                        \text{ny} = \text{instruction}[8] = c_4 \\
+                        \text{f}  = \text{instruction}[7] = c_5 \\
+                        \text{no} = \text{instruction}[6] = c_6
+                    \end{cases} \\
+    \text{cond6} & = (\text{zr}, \text{ng}) \\
+    \text{cond7} & = \text{instruction}[15] \text{ and } \text{instruction}[3]
+\end{align*}
+
+\begin{itemize}
+    \item \text{instruction}[3]: $d_3$, destination M
+    \item \text{instruction}[4]: $d_2$, destination D
+\end{itemize}
+
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics{pic/project05/cpu3.png}
+    \caption{memory}
+\end{figure}
+
+
+\begin{align*}
+    \text{cond8} = & \overline{\text{zr}} \cdot \overline{\text{ng}} \cdot \overline{j_1} \cdot \overline{j_2} \cdot \overline{j_3} \text{~~~~~~~ (JGT)} \\
+                 & + \overline{\text{zr}} \cdot \overline{j_1} \cdot j_2 \cdot j_3 \text{~~~~~~ (JEQ)} \\
+                 & + \overline{\text{ng}} \cdot \overline{j_1} \cdot j_2 \cdot j_3 \text{~~~~~~ (JGE)} \\
+                 & + \text{ng} \cdot j_1 \cdot \overline{j_2} \cdot \overline{j_3} \text{~~~~~~ (JLT)} \\
+                 & + \overline{\text{zr}} \cdot j_1 \cdot \overline{j_2} \cdot j_3 \text{~~~~~~ (JNE)} \\
+                 & + (\text{zr} + \text{ng}) \cdot j_1 \cdot j_2 \cdot \overline{j_3} \text{~~~~~~ (JLE)} \\
+                 & + j_1 \cdot j_2 \cdot j_3 \text{~~~~~~ (JMP)}
+\end{align*}
+
 
 \end{document}

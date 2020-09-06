@@ -1,2 +1,4 @@
+# build:
+# 	ptex2pdf -u -l main
 build:
-	ptex2pdf -u -l main
+	pdflatex main && rm -f *.aux *.log
