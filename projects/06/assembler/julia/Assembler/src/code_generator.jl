@@ -1,7 +1,6 @@
 module CodeGenerator
 
-include("parser.jl")
-using .Parser: AbstractInstruction, AInstruction, CInstruction, Label
+using ..Parser: Parser
 
 export gen_code
 
