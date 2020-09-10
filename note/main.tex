@@ -3,12 +3,20 @@
 
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
+\usepackage{color}
+\definecolor{bl}{gray}{0.9}
 
 % figure position
 \usepackage{booktabs}
 \usepackage{here}
 
+\title{Note: The Elements of Computing Systems}
+
 \begin{document}
+\maketitle
+
+\chapter*{Preface}
+This is my study note for The Elements of Computing Systems (ISBN:  978-0262640688) by Noam Nisan and Shimon Schocken.
 
 \chapter{Boolean Logic}
 \textbf{Boolean Algebra}
@@ -151,5 +159,291 @@ $\text{C-instruction} = 111a c_1 c_2 c_3 c_4 c_5 c_6 d_1 d_2 d_3 j_1 j_2 j_3$
                  & + j_1 \cdot j_2 \cdot j_3 \text{~~~~~~ (JMP)}
 \end{align*}
 
+\setcounter{chapter}{6}
+\chapter{Virtual Machine I: Stack Arithmetic}
+\section{Arithmetic}
 
+\[
+    \texttt{add (sub)}
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{ // SP--                            } \\
+        \texttt{ @SP                                } \\
+        \texttt{ M=M-1                              } \\
+        \\
+        \texttt{ // D = y                           } \\
+        \texttt{ A=M                                } \\
+        \texttt{ D=M                                } \\
+        \\
+        \texttt{ // SP--                            } \\
+        \texttt{ @SP                                } \\
+        \texttt{ M=M-1                              } \\
+        \\
+        \texttt{ // *SP = y + x (add) / x - y (sub) } \\
+        \texttt{ A=M                                } \\
+        \texttt{ M=D+M (add) / M=M-D (sub)          } \\
+        \\
+        \texttt{ // SP++                            } \\
+        \texttt{ @SP                                } \\
+        \texttt{ M=M+1                              }
+    \end{cases}
+\]
+
+\[
+    \texttt{neg, not}
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{ // SP--                 } \\
+        \texttt{ @SP                     } \\
+        \texttt{ @M=M-1                  } \\
+        \\
+        \texttt{ // -M                   } \\
+        \texttt{ A=M                     } \\
+        \texttt{ M=-M (neg) / M=!M (not) } \\
+        \\
+        \texttt{ // SP++                 } \\
+        \texttt{ @SP                     } \\
+        \texttt{ M=M+1                   }
+    \end{cases}
+\]
+
+
+\[
+    \texttt{eq, gt, lt}
+    \Rightarrow
+    \begin{cases}
+        ~ ~ ~ ~\texttt{ // SP--                             } \\
+        ~ ~ ~ ~\texttt{ @SP                                 } \\
+        ~ ~ ~ ~\texttt{ M=M-1                               } \\
+        ~ ~ ~ ~\\
+        ~ ~ ~ ~\texttt{ // D = y                            } \\
+        ~ ~ ~ ~\texttt{ D=M                                 } \\
+        ~ ~ ~ ~\\
+        ~ ~ ~ ~\texttt{ // SP--                             } \\
+        ~ ~ ~ ~\texttt{ @SP                                 } \\
+        ~ ~ ~ ~\texttt{ M=M-1                               } \\
+        ~ ~ ~ ~\\
+        ~ ~ ~ ~\texttt{ // x - y                            } \\
+        ~ ~ ~ ~\texttt{ A = M                               } \\
+        ~ ~ ~ ~\texttt{ D=M-D                               } \\
+        ~ ~ ~ ~\\
+        ~ ~ ~ ~\texttt{ // if condition then -1 else 0 end  } \\
+        ~ ~ ~ ~\texttt{ @then                               } \\
+        ~ ~ ~ ~\texttt{ D;jEQ (eq),  D;JGT (gt), D:JLT (lt) } \\
+        ~ ~ ~ ~\texttt{ @SP                                 } \\
+        ~ ~ ~ ~\texttt{ A=M                                 } \\
+        ~ ~ ~ ~\texttt{ M=0                                 } \\
+        ~ ~ ~ ~\texttt{ @end                                } \\
+        ~ ~ ~ ~\texttt{ 0;JMP                               } \\
+        \texttt{ (then)                                     } \\
+        ~ ~ ~ ~\texttt{ @SP                                 } \\
+        ~ ~ ~ ~\texttt{ A=M                                 } \\
+        ~ ~ ~ ~\texttt{ M=-1                                } \\
+        \texttt{ (end)                                      } \\
+        \\
+        ~ ~ ~ ~\texttt{ // SP++                             } \\
+        ~ ~ ~ ~\texttt{ @SP                                 } \\
+        ~ ~ ~ ~\texttt{ M=M+1                               } \\
+    \end{cases}
+\]
+
+\[
+    \texttt{and, or}
+    \Rightarrow
+    \begin{cases}
+        \texttt{ // SP++       } \\
+        \texttt{ @SP           } \\
+        \texttt{ M=M-1         } \\
+        \\
+        \texttt{ // D = y      } \\
+        \texttt{ A=M           } \\
+        \texttt{ D=M           } \\
+        \\
+        \texttt{ // SP--       } \\
+        \texttt{ @SP           } \\
+        \texttt{ M=M-1         } \\
+        \\
+        \texttt{ // *SP = y\&x } \\
+        \texttt{ A=M           } \\
+        \texttt{ M=D\&M        } \\
+        \\
+        \texttt{ // SP++       } \\
+        \texttt{ @SP           } \\
+        \texttt{ M=M+1         }
+    \end{cases}
+\]
+
+
+\section{logical command}
+% push constant i
+\[
+    \texttt{push constant i}
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{*SP = i} \\
+        \texttt{SP++}
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{// *SP=i} \\
+        \texttt{@i} \\
+        \texttt{D=A} \\
+        \texttt{@SP} \\
+        \texttt{A=M} \\
+        \texttt{M=D} \\
+        \\
+        \texttt{// SP++} \\
+        \texttt{@SP} \\
+        \texttt{M=M+1}
+    \end{cases}
+\]
+
+
+% push segment i: segment = {local, argument, this that}
+\[
+    \texttt{push segment i}
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{addr =  SEG + i } \\
+        \texttt{*SP = *addr     } \\
+        \texttt{SP++            }
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{// addr = SEG + i } \\
+        \texttt{@SEG              } \\
+        \texttt{D=M               } \\
+        \texttt{@i                } \\
+        \texttt{A=D+A             } \\
+        %
+        \\
+        \texttt{// *addr          } \\
+        \texttt{D=M               } \\
+        \\
+        \texttt{// *SP = *addr    } \\
+        \texttt{@SP               } \\
+        \texttt{A=M               } \\
+        \texttt{M=D               } \\
+        %
+        \\
+        \texttt{// SP++           } \\
+        \texttt{@SP               } \\
+        \texttt{M=M+1             }
+    \end{cases}
+\]
+where \texttt{segment = local, argument, this, that}.
+
+\[
+    \texttt{push pointer i}
+    \Rightarrow
+    \begin{cases}
+        \texttt{ @THIS // or @R3 } \\
+        \texttt{ D=M             } \\
+        \texttt{ @i              } \\
+        \texttt{ A=D+A           } \\
+        \texttt{ D=M             } \\
+        \texttt{ @SP             } \\
+        \texttt{ A=M             } \\
+        \texttt{ M=D             } \\
+        \texttt{ @SP             } \\
+        \texttt{ M=M+1           }
+    \end{cases}
+\]
+
+
+\[
+    \texttt{push static i}
+    \Rightarrow
+    \begin{cases}
+        \texttt{ @Xxx.i } \\
+        \texttt{ D=M    } \\
+        \texttt{ @SP    } \\
+        \texttt{ A=M    } \\
+        \texttt{ M=D    } \\
+        \texttt{ @SP    } \\
+        \texttt{ M=M+1  }
+    \end{cases}
+\]
+where this vm program name is \texttt{Xxx.vm}.
+
+% pop segment i
+\[
+    \texttt{pop segment i}
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{addr = SEG + i } \\
+        \texttt{SP--           } \\
+        \texttt{*addr = *SP    }
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{SEG = SEG + i } \\
+        \texttt{SP--          } \\
+        \texttt{*SEG = *SP    } \\
+        \texttt{SEG = SEG - i }
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{// SEG=SEG+i  } \\
+        \texttt{@SEG          } \\
+        \texttt{D=M           } \\
+        \texttt{@i            } \\
+        \texttt{D=D+A         } \\
+        \texttt{@SEG          } \\
+        \texttt{M=D           } \\
+        \\
+        \texttt{// SP--       } \\
+        \texttt{@SP           } \\
+        \texttt{M=M-1         } \\
+        \\
+        \texttt{// *SP        } \\
+        \texttt{A=M           } \\
+        \texttt{D=M           } \\
+        \\
+        \texttt{// *SEG = *SP } \\
+        \texttt{@SEG          } \\
+        \texttt{A=M           } \\
+        \texttt{M=D           } \\
+        \\
+        \texttt{// SEG=SEG-i  } \\
+        \texttt{@i            } \\
+        \texttt{D=A           } \\
+        \texttt{@SEG          } \\
+        \texttt{M=M-D         } \\
+    \end{cases}
+\]
+where \texttt{segment = local, argument, this, that}.
+
+\texttt{\colorbox{bl}{pop pointer i}} is equivalent to \texttt{\colorbox{bl}{pop this i}} where $i = 0, 1$.
+
+
+\[
+    \texttt{pop static i}
+    \Rightarrow
+    \begin{cases}
+        \texttt{ // SP-- } \\
+        \texttt{ @SP     } \\
+        \texttt{ M=M-1   } \\
+        \\
+        \texttt{ // *SP  } \\
+        \texttt{ A=M     } \\
+        \texttt{ D=M     } \\
+        \\
+        \texttt{ @Xxx.i  } \\
+        \texttt{ M=D     }
+    \end{cases}
+\]
 \end{document}
