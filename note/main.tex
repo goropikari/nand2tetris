@@ -254,25 +254,25 @@ $\text{C-instruction} = 111a c_1 c_2 c_3 c_4 c_5 c_6 d_1 d_2 d_3 j_1 j_2 j_3$
     \texttt{and, or}
     \Rightarrow
     \begin{cases}
-        \texttt{ // SP++       } \\
-        \texttt{ @SP           } \\
-        \texttt{ M=M-1         } \\
+        \texttt{ // SP--                  } \\
+        \texttt{ @SP                      } \\
+        \texttt{ M=M-1                    } \\
         \\
-        \texttt{ // D = y      } \\
-        \texttt{ A=M           } \\
-        \texttt{ D=M           } \\
+        \texttt{ // D = y                 } \\
+        \texttt{ A=M                      } \\
+        \texttt{ D=M                      } \\
         \\
-        \texttt{ // SP--       } \\
-        \texttt{ @SP           } \\
-        \texttt{ M=M-1         } \\
+        \texttt{ // SP--                  } \\
+        \texttt{ @SP                      } \\
+        \texttt{ M=M-1                    } \\
         \\
-        \texttt{ // *SP = y\&x } \\
-        \texttt{ A=M           } \\
-        \texttt{ M=D\&M        } \\
+        \texttt{ // *SP = y\&x            } \\
+        \texttt{ A=M                      } \\
+        \texttt{ M=D\&M (and), M=D|M (or) } \\
         \\
-        \texttt{ // SP++       } \\
-        \texttt{ @SP           } \\
-        \texttt{ M=M+1         }
+        \texttt{ // SP++                  } \\
+        \texttt{ @SP                      } \\
+        \texttt{ M=M+1                    }
     \end{cases}
 \]
 
@@ -284,23 +284,23 @@ $\text{C-instruction} = 111a c_1 c_2 c_3 c_4 c_5 c_6 d_1 d_2 d_3 j_1 j_2 j_3$
     \Rightarrow
     %
     \begin{cases}
-        \texttt{*SP = i} \\
-        \texttt{SP++}
+        \texttt{ *SP=i } \\
+        \texttt{ SP++  }
     \end{cases}
     %
     \Rightarrow
     %
     \begin{cases}
-        \texttt{// *SP=i} \\
-        \texttt{@i} \\
-        \texttt{D=A} \\
-        \texttt{@SP} \\
-        \texttt{A=M} \\
-        \texttt{M=D} \\
+        \texttt{// *SP=i } \\
+        \texttt{@i       } \\
+        \texttt{D=A      } \\
+        \texttt{@SP      } \\
+        \texttt{A=M      } \\
+        \texttt{M=D      } \\
         \\
-        \texttt{// SP++} \\
-        \texttt{@SP} \\
-        \texttt{M=M+1}
+        \texttt{// SP++  } \\
+        \texttt{@SP      } \\
+        \texttt{M=M+1    }
     \end{cases}
 \]
 
