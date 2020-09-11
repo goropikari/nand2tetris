@@ -1,7 +1,8 @@
 module VMTranslator
 
-# module Lexer end
+# module Lexer
 include("lexer.jl")
+
 # module Parser end
 # module CodeWriter end
 
