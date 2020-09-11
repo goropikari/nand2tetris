@@ -4,7 +4,8 @@ module VMTranslator
 include("lexer.jl")
 
 # module Parser end
-# module CodeWriter end
+include("parser.jl")
 
+# module CodeWriter end
 
 end # module
