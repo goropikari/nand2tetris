@@ -1,0 +1,7 @@
+name = "VMTranslator"
+uuid = "6b28eb30-7350-4fd7-88dc-059756191d5f"
+authors = ["goropikari <goropikari56@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Automa = "67c07d97-cdcb-5c2c-af73-a7f9c32a568b"
