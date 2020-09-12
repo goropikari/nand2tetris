@@ -13,12 +13,19 @@ import .Lexer
 import .Parser
 import .CodeWriter
 
-function translate(filepath, outpath="hack.asm", src_dir=true)
+function translate(filepath, src_dir=true)
     vmfiles = []
+    outpath = ""
     if isdir(filepath)
+        if occursin(r".*\/$", filepath)
+            filepath = filepath[1:end-1]
+        end
+        bname = basename(filepath)
+        outpath = joinpath(filepath, bname * ".asm")
         files = filter(s -> occursin(r"\.vm$", s), readdir(filepath))
         append!(vmfiles, joinpath.(filepath, files))
     else
+        outpath = filepath[1:end-2] * "asm"
         push!(vmfiles, filepath)
     end
 
