@@ -344,25 +344,57 @@ where \texttt{segment = local, argument, this, that}.
 
 \[
     \texttt{push pointer i}
+    %
     \Rightarrow
+    %
     \begin{cases}
-        \texttt{ @THIS // or @R3 } \\
-        \texttt{ D=M             } \\
-        \texttt{ @i              } \\
-        \texttt{ A=D+A           } \\
-        \texttt{ D=M             } \\
-        \texttt{ @SP             } \\
-        \texttt{ A=M             } \\
-        \texttt{ M=D             } \\
-        \texttt{ @SP             } \\
-        \texttt{ M=M+1           }
+        \texttt{ *SP = *(R3 + i) }
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{ // *(R3 + i)       } \\
+        \texttt{ @R(3 + i)          } \\
+        \texttt{ D=M                } \\
+        \\
+        \texttt{ // *SP = *(R3 + i) } \\
+        \texttt{ @SP                } \\
+        \texttt{ A=M                } \\
+        \texttt{ M=D                }
     \end{cases}
 \]
 
+\[
+    \texttt{push temp i}
+    \Rightarrow
+    \begin{cases}
+        \texttt{ *SP = *(R5 + i) }
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{ // *(R5 + i)       } \\
+        \texttt{ @R(5 + i)          } \\
+        \texttt{ D=M                } \\
+        \\
+        \texttt{ // *SP = *(R5 + i) } \\
+        \texttt{ @SP                } \\
+        \texttt{ A=M                } \\
+        \texttt{ M=D                }
+    \end{cases}
+\]
 
 \[
     \texttt{push static i}
     \Rightarrow
+    \begin{cases}
+        \texttt{ *SP = *Xxx.i }
+    \end{cases}
+    %
+    \Rightarrow
+    %
     \begin{cases}
         \texttt{ @Xxx.i } \\
         \texttt{ D=M    } \\
@@ -428,12 +460,66 @@ where this vm program name is \texttt{Xxx.vm}.
 \]
 where \texttt{segment = local, argument, this, that}.
 
-\texttt{\colorbox{bl}{pop pointer i}} is equivalent to \texttt{\colorbox{bl}{pop this i}} where $i = 0, 1$.
+\[
+    \texttt{pop pointer i}
+    \Rightarrow
+    \begin{cases}
+        \texttt{ SP--            } \\
+        \texttt{ *SP             } \\
+        \texttt{ *(R3 + i) = *SP }
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{ // SP--   } \\
+        \texttt{ @SP       } \\
+        \texttt{ M=M-1     } \\
+        \\
+        \texttt{ // *SP    } \\
+        \texttt{ A=M       } \\
+        \texttt{ D=M       } \\
+        \\
+        \texttt{ @R(3 + i) } \\
+        \texttt{ M=D       }
+    \end{cases}
+\]
 
+\[
+    \texttt{pop temp i}
+    \Rightarrow
+    \begin{cases}
+        \texttt{ SP--            } \\
+        \texttt{ *SP             } \\
+        \texttt{ *(R5 + i) = *SP }
+    \end{cases}
+    %
+    \Rightarrow
+    %
+    \begin{cases}
+        \texttt{ // SP--   } \\
+        \texttt{ @SP       } \\
+        \texttt{ M=M-1     } \\
+        \\
+        \texttt{ // *SP    } \\
+        \texttt{ A=M       } \\
+        \texttt{ D=M       } \\
+        \\
+        \texttt{ @R(5 + i) } \\
+        \texttt{ M=D       }
+    \end{cases}
+\]
 
 \[
     \texttt{pop static i}
     \Rightarrow
+    \begin{cases}
+        \texttt{ SP--            } \\
+        \texttt{ *(Xxx.i) = *SP }
+    \end{cases}
+    %
+    \Rightarrow
+    %
     \begin{cases}
         \texttt{ // SP-- } \\
         \texttt{ @SP     } \\
