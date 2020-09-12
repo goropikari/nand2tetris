@@ -54,3 +54,96 @@ end
                        VMTranslator.Parser.Push("constant", "x")
                       ]
 end
+
+@testset "CodeWriter" begin
+    commands = [
+                VMTranslator.Parser.Push("constant", "1")
+                VMTranslator.Parser.Push("argument", "10")
+                VMTranslator.Parser.Pop("local", "23")
+                VMTranslator.Parser.Add()
+                VMTranslator.Parser.Push("constant", "x")
+                VMTranslator.Parser.Push("static", "10")
+                VMTranslator.Parser.Push("temp", "123")
+                VMTranslator.Parser.Push("pointer", "0")
+               ]
+    io = IOBuffer()
+    VMTranslator.CodeWriter.set_filename("foobar")
+    VMTranslator.CodeWriter.cgen(io, commands)
+    str = replace(String(io.data), " " => "")
+    expected = """
+        @1
+        D=A
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        @ARG
+        D=M
+        @10
+        A=D+A
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        @LCL
+        D=M
+        @23
+        D=D+A
+        @LCL
+        M=D
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @LCL
+        A=M
+        M=D
+        @23
+        D=A
+        @LCL
+        M=M-D
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @SP
+        M=M-1
+        A=M
+        M=D+M
+        @SP
+        M=M+1
+        @x
+        D=A
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        @foobar.10
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        @R128
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        @R3
+        D=M
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+    """
+    expected = replace(expected, " " => "")
+    @test expected == str
+end
