@@ -13,7 +13,7 @@ import .Lexer
 import .Parser
 import .CodeWriter
 
-function translate(filepath)
+function translate(filepath, outpath="hack.asm", src_dir=true)
     vmfiles = []
     if isdir(filepath)
         files = filter(s -> occursin(r"\.vm$", s), readdir(filepath))
@@ -22,12 +22,17 @@ function translate(filepath)
         push!(vmfiles, filepath)
     end
 
-    for vm in vmfiles
-        _translate_file(vm)
+    open(outpath, "w") do out
+        for vm in vmfiles
+            println(out, "// From $(vm)")
+            _translate_file(vm, out)
+            println(out)
+        end
     end
+    println(abspath(outpath))
 end
 
-function _translate_file(filepath)
+function _translate_file(filepath, out::IO)
     filepath = abspath(filepath)
     filename, extension = match(r"(.*)\.([^\.])*", basename(filepath)).captures
     dir = dirname(filepath)
@@ -37,11 +42,8 @@ function _translate_file(filepath)
         tokens = Lexer.tokenize(fr)
     end
     commands = Parser.parse(tokens)
-    println(joinpath(dir, filename * ".asm"))
     CodeWriter.set_filename(filename)
-    open(joinpath(dir, filename * ".asm"), "w") do fp
-        CodeWriter.cgen(fp, commands)
-    end
+    CodeWriter.cgen(out, commands)
 end
 
 end # module
