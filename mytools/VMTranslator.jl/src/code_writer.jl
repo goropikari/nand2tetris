@@ -82,11 +82,14 @@ function _compare(io::IO, jump)
     println(io, INDENT * "@then$(LABEL_CNT)")
     println(io, INDENT * "D;$(jump)")
     # else
+    #   *SP = false
     println(io, INDENT * sp)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=0") # false
     println(io, INDENT * "@end$(LABEL_CNT)")
     println(io, INDENT * "0;JMP")
+    # then
+    #   *SP = true
     println(io, "(then$(LABEL_CNT))")
     println(io, INDENT * sp)
     println(io, INDENT * "A=M")
@@ -128,12 +131,17 @@ end
 
 function cgen(io::IO, command::Push)
     command.arg1 == "constant" && _push_constant(io, command.arg2)
-end
-
-function cgen(io::IO, command::Pop)
+    command.arg1 == "local"    && _push_segment(io, "LCL", command.arg2)
+    command.arg1 == "argument" && _push_segment(io, "ARG", command.arg2)
+    command.arg1 == "this"     && _push_segment(io, "THIS", command.arg2)
+    command.arg1 == "that"     && _push_segment(io, "THAT", command.arg2)
+    command.arg1 == "temp"     && _push_temp(io, command.arg2)
+    command.arg1 == "pointer"  && _push_pointer(io, command.arg2)
+    command.arg1 == "static"   && _push_static(io, command.arg2)
 end
 
 function _push_constant(io, arg)
+    # *SP = arg
     println(io, INDENT * "@$(arg)")
     println(io, INDENT * "D=A")
     println(io, INDENT * sp)
@@ -141,6 +149,137 @@ function _push_constant(io, arg)
     println(io, INDENT * "M=D")
 
     _spinc(io)
+end
+
+function _push_segment(io::IO, seg, arg)
+    # SEG = SEG + arg
+    println(io, INDENT * "@$(seg)")
+    println(io, INDENT * "D=M")
+    println(io, INDENT * "@$(arg)")
+    println(io, INDENT * "A=D+A")
+
+    # *SEG
+    println(io, INDENT * "D=M")
+
+    # *SP = *SEG
+    println(io, INDENT * sp)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "M=D")
+
+    _spinc(io)
+end
+
+function _push_temp(io::IO, arg)
+    # *(R5 + arg)
+    ith = parse(Int, arg)
+    println(io, INDENT * "@R$(5+ith)")
+    println(io, INDENT * "D=M")
+
+    # *SP = *(R5 + arg)
+    println(io, INDENT * sp)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "M=D")
+
+    _spinc(io)
+end
+
+function _push_pointer(io::IO, arg)
+    # *(R3 + arg)
+    ith = parse(Int, arg)
+    println(io, INDENT * "@R$(3+ith)")
+    println(io, INDENT * "D=M")
+
+    # *SP = *(R3 + arg)
+    println(io, INDENT * sp)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "M=D")
+
+    _spinc(io)
+end
+
+function _push_static(io::IO, arg)
+    # *SP = *(Xxx.i)
+    println(io, INDENT * "@$(FILENAME).$(arg)")
+    println(io, INDENT * "D=M")
+    println(io, INDENT * sp)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "M=D")
+    _spinc(io)
+end
+
+
+function cgen(io::IO, command::Pop)
+    command.arg1 == "local"    && _pop_segment(io, "LCL", command.arg2)
+    command.arg1 == "argument" && _pop_segment(io, "ARG", command.arg2)
+    command.arg1 == "this"     && _pop_segment(io, "THIS", command.arg2)
+    command.arg1 == "that"     && _pop_segment(io, "THAT", command.arg2)
+    command.arg1 == "temp"     && _pop_temp(io, command.arg2)
+    command.arg1 == "pointer"  && _pop_pointer(io, command.arg2)
+    command.arg1 == "static"   && _pop_static(io, command.arg2)
+end
+
+function _pop_segment(io::IO, seg, arg)
+    # change base address
+    # SEG = SEG + arg
+    println(io, INDENT * "@$(seg)")
+    println(io, INDENT * "D=M")
+    println(io, INDENT * "@$(arg)")
+    println(io, INDENT * "D=D+A")
+    println(io, INDENT * "@$(seg)")
+    println(io, INDENT * "M=D")
+
+    _spdec(io)
+
+    # *SP
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=M")
+
+    # *SEG = *SP
+    println(io, INDENT * "@$(seg)")
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "M=D")
+
+    # restore base address
+    # SEG = SEG - arg
+    println(io, INDENT * "@$(arg)")
+    println(io, INDENT * "D=A")
+    println(io, INDENT * "@$(seg)")
+    println(io, INDENT * "M=M-D")
+end
+
+function _pop_temp(io::IO, arg)
+    # *SP
+    _spdec(io)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=M")
+
+    # *(R5 + ith) = *SP
+    ith = parse(Int, arg)
+    println(io, INDENT * "@R$(5+ith)")
+    println(io, INDENT * "M=D")
+end
+
+function _pop_pointer(io::IO, arg)
+    # *SP
+    _spdec(io)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=M")
+
+    # *(R3 + ith) = *SP
+    ith = parse(Int, arg)
+    println(io, INDENT * "@R$(3+ith)")
+    println(io, INDENT * "M=D")
+end
+
+function _pop_static(io::IO, arg)
+    # *SP
+    _spdec(io)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=M")
+
+    # *Xxx.arg = *SP
+    println(io, INDENT * "@$(FILENAME).$(arg)")
+    println(io, INDENT * "M=D")
 end
 
 function cgen(io, commands)
