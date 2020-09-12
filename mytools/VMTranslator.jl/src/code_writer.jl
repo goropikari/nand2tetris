@@ -1,5 +1,7 @@
 module CodeWriter
-import ..Parser: VM, Arithmetic, Add, Sub, Neg, Eq, Gt, Lt, And, Or, Not, Push, Pop
+export cgen
+
+import ..Parser: VM, Arithmetic, Add, Sub, Neg, Eq, Gt, Lt, And, Or, Not, Push, Pop, Label, Goto, IfGoto
 
 FILENAME = ""
 LABEL_CNT = 0
@@ -10,6 +12,17 @@ sp = "@SP"
 function set_filename(name)
     global FILENAME = name
     return nothing
+end
+
+"""
+    cgen(io, commands::Union{VM, Vector{VM}})
+
+Genarate Hack assembly from VM code.
+"""
+function cgen(io, commands)
+    for command in commands
+        cgen(io, command)
+    end
 end
 
 ##############
@@ -282,10 +295,25 @@ function _pop_static(io::IO, arg)
     println(io, INDENT * "M=D")
 end
 
-function cgen(io, commands)
-    for command in commands
-        cgen(io, command)
-    end
+
+#########
+# branch
+#########
+function cgen(io::IO, label::Label)
+    println(io, "($(label.label))")
+end
+
+function cgen(io::IO, goto::Goto)
+    println(io, INDENT * "@$(goto.label)")
+    println(io, INDENT * "0;JMP")
+end
+
+function cgen(io::IO, ifgoto::IfGoto)
+    _spdec(io)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=M")
+    println(io, INDENT * "@$(ifgoto.label)")
+    println(io, INDENT * "D;JNE")
 end
 
 # SP++

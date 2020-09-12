@@ -146,4 +146,26 @@ end
     """
     expected = replace(expected, " " => "")
     @test expected == str
+
+    commands = [
+                VMTranslator.Parser.Label("piyo")
+                VMTranslator.Parser.Goto("IF_HOGE")
+                VMTranslator.Parser.IfGoto("hogehoge")
+               ]
+    io = IOBuffer()
+    VMTranslator.CodeWriter.cgen(io, commands)
+    str = replace(String(io.data), " " => "")
+    expected = """
+    (piyo)
+        @IF_HOGE
+        0;JMP
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @hogehoge
+        D;JNE
+    """
+    expected = replace(expected, " " => "")
+    @test expected == str
 end

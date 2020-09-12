@@ -1,4 +1,5 @@
 module Parser
+export parse
 
 struct VMParseError <: Exception
     msg::String
@@ -6,6 +7,7 @@ end
 Base.showerror(io::IO, e::VMParseError) = print(io, e.msg)
 
 abstract type VM end
+
 abstract type Arithmetic <: VM end
 for op in [:Add, :Sub, :Neg, :Eq, :Gt, :Lt, :And, :Or, :Not]
     eval(quote
@@ -17,10 +19,24 @@ struct Push <: VM
     arg1::String
     arg2::String
 end
+
 struct Pop <: VM
     arg1::String
     arg2::String
 end
+
+struct Label <: VM
+    label::String
+end
+
+struct Goto <: VM
+    label::String
+end
+
+struct IfGoto <: VM
+    label::String
+end
+
 struct None <: VM end
 
 const arithmetic = Dict(
@@ -49,6 +65,8 @@ function parse(tokens::Vector{Tuple{Symbol, String}})
             command, cnt = _pushpop(:push, tokens, cnt)
         elseif typ == :pop
             command, cnt = _pushpop(:pop, tokens, cnt)
+        elseif typ == :branch
+            command, cnt = _branch(val, tokens, cnt)
         else
             throw(VMParseError("This token type isn't supported: $(string(op))"))
         end
@@ -68,6 +86,20 @@ function _pushpop(sym, tokens, cnt)
         return Push(arg1[2], arg2[2]), cnt
     elseif sym == :pop
         return Pop(arg1[2], arg2[2]), cnt
+    else
+        throw(VMParseError(""))
+    end
+end
+
+function _branch(val, tokens, cnt)
+    label, cnt = iterate(tokens, cnt)
+    label[1] != :symbol && throw(VMParseError("$(label[1]) ($(label[2])) is not argument of push."))
+    if val == "label"
+        return Label(label[2]), cnt
+    elseif val == "goto"
+        return Goto(label[2]), cnt
+    elseif val ==  "if-goto"
+        return IfGoto(label[2]), cnt
     else
         throw(VMParseError(""))
     end

@@ -1,6 +1,6 @@
-module Lexer
-
 # ref: https://github.com/BioJulia/Automa.jl/blob/v0.8.0/example/tokenizer.jl
+module Lexer
+export tokenize
 
 import Automa
 import Automa.RegExp: @re_str
@@ -11,6 +11,7 @@ whitespace = re"[ \t]+"
 comment    = re"//[^\n]*"
 arithmetic = re"add|sub|neg|eq|gt|lt|and|or|not"
 segment    = re"argument|local|static|constant|this|that|pointer|temp"
+branch     = re"label|goto|if-goto"
 _push      = re"push"
 _pop       = re"pop"
 symbol     = re"[a-zA-Z_.$:][0-9a-zA-Z_.$:]*"
@@ -23,6 +24,7 @@ const vm = Automa.compile(
     digit      => :(emit(:digit)),
     arithmetic => :(emit(:arithmetic)),
     segment    => :(emit(:segment)),
+    branch     => :(emit(:branch)),
     _push      => :(emit(:push)),
     _pop       => :(emit(:pop)),
     symbol     => :(emit(:symbol))
