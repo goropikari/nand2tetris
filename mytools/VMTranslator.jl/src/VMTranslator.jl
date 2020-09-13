@@ -30,6 +30,12 @@ function translate(filepath, src_dir=true)
     end
 
     open(outpath, "w") do out
+        # INDENT = " "^4
+        # println(out, INDENT * "@256")
+        # println(out, INDENT * "D=A")
+        # println(out, INDENT * "@SP")
+        # println(out, INDENT * "M=D")
+        # println(out, INDENT * "call Sys.init")
         for vm in vmfiles
             println(out, "// From $(vm)")
             _translate_file(vm, out)

@@ -1,12 +1,21 @@
 module CodeWriter
 export cgen
 
-import ..Parser: VM, Arithmetic, Add, Sub, Neg, Eq, Gt, Lt, And, Or, Not, Push, Pop, Label, Goto, IfGoto
+import ..Parser: VM, Arithmetic, Add, Sub, Neg, Eq, Gt, Lt,
+                 And, Or, Not, Push, Pop, Label, Goto, IfGoto,
+                 Callee, Caller
 
-FILENAME = ""
-LABEL_CNT = 0
-INDENT = " "^4
-sp = "@SP"
+FILENAME   = ""
+LABEL_CNT  = 0
+RETURN_CNT = 0
+INDENT     = " "^4
+SP         = "@SP"
+FRAME      = "@R13"
+RET        = "@R14"
+THAT       = "@THAT"
+THIS       = "@THIS"
+ARG        = "@ARG"
+LCL        = "@LCL"
 
 
 function set_filename(name)
@@ -19,7 +28,9 @@ end
 
 Genarate Hack assembly from VM code.
 """
-function cgen(io, commands)
+function cgen end
+
+function cgen(io::IO, commands::Vector{T}) where T <: VM
     for command in commands
         cgen(io, command)
     end
@@ -96,7 +107,7 @@ function _compare(io::IO, jump)
     println(io, INDENT * "D;$(jump)")
     # else
     #   *SP = false
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=0") # false
     println(io, INDENT * "@end$(LABEL_CNT)")
@@ -104,7 +115,7 @@ function _compare(io::IO, jump)
     # then
     #   *SP = true
     println(io, "(then$(LABEL_CNT))")
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=-1") # true
     println(io, "(end$(LABEL_CNT))")
@@ -157,7 +168,7 @@ function _push_constant(io, arg)
     # *SP = arg
     println(io, INDENT * "@$(arg)")
     println(io, INDENT * "D=A")
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=D")
 
@@ -175,7 +186,7 @@ function _push_segment(io::IO, seg, arg)
     println(io, INDENT * "D=M")
 
     # *SP = *SEG
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=D")
 
@@ -189,7 +200,7 @@ function _push_temp(io::IO, arg)
     println(io, INDENT * "D=M")
 
     # *SP = *(R5 + arg)
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=D")
 
@@ -203,7 +214,7 @@ function _push_pointer(io::IO, arg)
     println(io, INDENT * "D=M")
 
     # *SP = *(R3 + arg)
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=D")
 
@@ -214,7 +225,7 @@ function _push_static(io::IO, arg)
     # *SP = *(Xxx.i)
     println(io, INDENT * "@$(FILENAME).$(arg)")
     println(io, INDENT * "D=M")
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=D")
     _spinc(io)
@@ -316,16 +327,136 @@ function cgen(io::IO, ifgoto::IfGoto)
     println(io, INDENT * "D;JNE")
 end
 
+############
+# function
+############
+function cgen(io::IO, callee::Callee)
+    println(io, "($(callee.name))")
+
+    for i in 1:callee.numlocal
+        println(io, INDENT * SP)
+        println(io, INDENT * "A=M")
+        println(io, INDENT * "M=0")
+        _spinc(io)
+    end
+
+    for item in callee.body
+        cgen(io, item)
+    end
+
+
+    # FRAME = LCL
+    println(io, INDENT * LCL)
+    println(io, INDENT * "D=M")
+    println(io, INDENT * FRAME)
+    println(io, INDENT * "M=D")
+
+    # RET = *(FRAME - 5)
+    _relative_addr_frame(io, RET, 5)
+
+    # *ARG = pop()
+    println(io, INDENT * "A=A // debug")
+    _spdec(io)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=M")
+    println(io, INDENT * ARG)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "M=D")
+
+    # SP = ARG + 1
+    println(io, INDENT * ARG)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=A+1")
+    println(io, INDENT * SP)
+    println(io, INDENT * "M=D")
+
+    # THAT = *(FRAME - 1)
+    _relative_addr_frame(io, THAT, 1)
+
+    # THIS = *(FRAME - 2)
+    _relative_addr_frame(io, THIS, 2)
+
+    # ARG = *(FRAME - 3)
+    _relative_addr_frame(io, ARG, 3)
+
+    # LCL = *(FRAME - 4)
+    _relative_addr_frame(io, LCL, 4)
+
+    # goto RET
+    println(io, INDENT * RET)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "0;JMP")
+end
+
+function cgen(io::IO, caller::Caller)
+    # push return-address
+    return_address_label = "RET_ADDR" * string(RETURN_CNT)
+    global RETURN_CNT += 1
+    return_address = "@" * return_address_label
+
+    println(io, INDENT * return_address)
+    println(io, INDENT * "D=A")
+    println(io, INDENT * SP)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "M=D")
+    _spinc(io)
+
+
+    # push LCL
+    _push_stack(io, LCL)
+
+    # push ARG
+    _push_stack(io, ARG)
+
+    # push THIS
+    _push_stack(io, THIS)
+
+    # push THAT
+    _push_stack(io, THAT)
+
+    # ARG = SP - n - 5 where n = caller.numargs
+    println(io, INDENT * "@$(caller.numargs + 5)")
+    println(io, INDENT * "D=A")
+    println(io, INDENT * SP)
+    println(io, INDENT * "M=M-D")
+
+    # goto f
+    println(io, INDENT * "@$(caller.name)")
+    println(io, INDENT * "0;JMP")
+
+    # (return-address)
+    println(io, "($(return_address_label))")
+end
+
+function _relative_addr_frame(io::IO, addr, offset)
+    println(io, INDENT * FRAME)
+    println(io, INDENT * "D=M")
+    println(io, INDENT * "@$(offset)")
+    println(io, INDENT * "A=D-A")
+    println(io, INDENT * "D=M")
+    println(io, INDENT * addr)
+    println(io, INDENT * "M=D")
+end
+
 # SP++
 function _spinc(io::IO)
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "M=M+1")
 end
 
 # SP--
 function _spdec(io::IO)
-    println(io, INDENT * sp)
+    println(io, INDENT * SP)
     println(io, INDENT * "M=M-1")
+end
+
+function _push_stack(io::IO, addr)
+    println(io, INDENT * addr)
+    println(io, INDENT * "A=M")
+    println(io, INDENT * "D=M")
+    println(io, INDENT * SP)
+    println(io, INDENT * "M=D")
+    _spinc(io)
 end
 
 end # module

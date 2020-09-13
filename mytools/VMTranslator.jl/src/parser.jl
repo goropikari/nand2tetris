@@ -11,7 +11,7 @@ abstract type VM end
 abstract type Arithmetic <: VM end
 for op in [:Add, :Sub, :Neg, :Eq, :Gt, :Lt, :And, :Or, :Not]
     eval(quote
-        struct $op <: VM end
+        struct $op <: Arithmetic end
      end)
 end
 
@@ -25,17 +25,37 @@ struct Pop <: VM
     arg2::String
 end
 
-struct Label <: VM
+abstract type Branch <: VM end
+mutable struct Label <: Branch
     label::String
 end
 
-struct Goto <: VM
+mutable struct Goto <: Branch
     label::String
 end
 
-struct IfGoto <: VM
+mutable struct IfGoto <: Branch
     label::String
 end
+
+abstract type _Function <: VM end
+struct Callee <: _Function
+    name::String
+    numlocal::Int
+    body::Vector{VM}
+end
+# function Base.show(io::IO, x::Callee)
+#     println(io, "Function name: $(x.name)")
+#     println(io, "The number of local var: $(x.numlocal)")
+#     println(io, "Body:")
+#     Base.print_array(io, x.body)
+# end
+
+struct Caller <: _Function
+    name::String
+    numargs::Int
+end
+
 
 struct None <: VM end
 
@@ -43,11 +63,11 @@ const arithmetic = Dict(
     "add" => Add(),
     "sub" => Sub(),
     "neg" => Neg(),
-    "eq" => Eq(),
-    "gt" => Gt(),
-    "lt" => Lt(),
+    "eq"  => Eq(),
+    "gt"  => Gt(),
+    "lt"  => Lt(),
     "and" => And(),
-    "or" => Or(),
+    "or"  => Or(),
     "not" => Not()
 )
 
@@ -67,6 +87,8 @@ function parse(tokens::Vector{Tuple{Symbol, String}})
             command, cnt = _pushpop(:pop, tokens, cnt)
         elseif typ == :branch
             command, cnt = _branch(val, tokens, cnt)
+        elseif typ == :function
+            command, cnt = _function(val, tokens, cnt) # val = function or call
         else
             throw(VMParseError("This token type isn't supported: $(string(op))"))
         end
@@ -103,6 +125,38 @@ function _branch(val, tokens, cnt)
     else
         throw(VMParseError(""))
     end
+end
+
+function _function(name, tokens, cnt)
+    name == "function" && return _callee(tokens, cnt)
+    name == "call" && return _caller(tokens, cnt)
+end
+
+function _callee(tokens::Vector{Tuple{Symbol, String}}, cnt)
+    fn, cnt = iterate(tokens, cnt)
+    fn[1] != :symbol && throw(VMParseError("$(fn[1]) ($(fn[2])) is not argument of call."))
+    numlocal, cnt = iterate(tokens, cnt)
+    numlocal[1] != :digit && throw(VMParseError("$(numlocal[1]) ($(numlocal[2])) is not argument of function."))
+
+    idx = findnext(x -> x == (:function, "return"), tokens, cnt)
+    isnothing(idx) && throw(VMParseError("There is no `return`."))
+    body::Vector{VM} = parse(tokens[cnt:idx-1])
+    for item in body
+        if item isa Branch
+            item.label = "$(fn[2])\$$(item.label)"
+        end
+    end
+
+    return Callee(fn[2], Base.parse(Int, numlocal[2]), body), idx+1
+end
+
+function _caller(tokens, cnt)
+    fn, cnt = iterate(tokens, cnt)
+    fn[1] != :symbol && throw(VMParseError("$(fn[1]) ($(fn[2])) is not argument of call."))
+    nargs, cnt = iterate(tokens, cnt)
+    nargs[1] != :digit && throw(VMParseError("$(nargs[1]) ($(nargs[2])) is not argument of call."))
+
+    return Caller(fn[2], Base.parse(Int, nargs[2])), cnt
 end
 
 end # module
