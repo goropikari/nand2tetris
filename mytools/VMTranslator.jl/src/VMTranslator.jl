@@ -30,6 +30,9 @@ function translate(filepath, src_dir=true)
     end
 
     open(outpath, "w") do out
+        # In order to pass test of ProgramFlow in project 8,
+        # followning print statement should be removed because
+        # these settings overwrite the base addressed of SP, ARG, and so on.
         INDENT = " "^4
         println(out, INDENT * "@261")
         println(out, INDENT * "D=A")
