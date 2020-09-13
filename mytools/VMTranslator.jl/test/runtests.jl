@@ -56,6 +56,7 @@ end
 end
 
 @testset "CodeWriter" begin
+    # push
     commands = [
                 VMTranslator.Parser.Push("constant", "1")
                 VMTranslator.Parser.Push("argument", "10")
@@ -70,6 +71,7 @@ end
     VMTranslator.CodeWriter.set_filename("foobar")
     VMTranslator.CodeWriter.cgen(io, commands)
     str = replace(String(io.data), " " => "")
+    str = replace(str, r"//[^\n]*\n" => "")
     expected = """
         @1
         D=A
@@ -147,6 +149,7 @@ end
     expected = replace(expected, " " => "")
     @test expected == str
 
+    # branch
     commands = [
                 VMTranslator.Parser.Label("piyo")
                 VMTranslator.Parser.Goto("IF_HOGE")
@@ -155,6 +158,7 @@ end
     io = IOBuffer()
     VMTranslator.CodeWriter.cgen(io, commands)
     str = replace(String(io.data), " " => "")
+    str = replace(str, r"//[^\n]*\n" => "")
     expected = """
     (piyo)
         @IF_HOGE
@@ -165,6 +169,78 @@ end
         D=M
         @hogehoge
         D;JNE
+    """
+    expected = replace(expected, " " => "")
+    @test expected == str
+
+
+    # function
+    commands = [
+                VMTranslator.Parser.Callee(
+                    "hoge",
+                    3,
+                    VMTranslator.Parser.VM[
+                        VMTranslator.Parser.Push("constant", "10"),
+                        VMTranslator.Parser.Push("constant", "3"),
+                        VMTranslator.Parser.Label("hoge\$hoge"),
+                        VMTranslator.Parser.Goto("hoge\$piyo"),
+                        VMTranslator.Parser.IfGoto("hoge\$fuga"),
+                        VMTranslator.Parser.Add()])
+               ]
+    io = IOBuffer()
+    VMTranslator.CodeWriter.cgen(io, commands)
+    str = replace(String(io.data), " " => "")
+    str = replace(str, r"//[^\n]*\n" => "")
+    expected = """
+    (hoge)
+        @SP
+        A=M
+        M=0
+        @SP
+        M=M+1
+        @SP
+        A=M
+        M=0
+        @SP
+        M=M+1
+        @SP
+        A=M
+        M=0
+        @SP
+        M=M+1
+        @10
+        D=A
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+        @3
+        D=A
+        @SP
+        A=M
+        M=D
+        @SP
+        M=M+1
+    (hoge\$hoge)
+        @hoge\$piyo
+        0;JMP
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @hoge\$fuga
+        D;JNE
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @SP
+        M=M-1
+        A=M
+        M=D+M
+        @SP
+        M=M+1
     """
     expected = replace(expected, " " => "")
     @test expected == str

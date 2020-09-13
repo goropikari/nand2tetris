@@ -3,7 +3,7 @@ export cgen
 
 import ..Parser: VM, Arithmetic, Add, Sub, Neg, Eq, Gt, Lt,
                  And, Or, Not, Push, Pop, Label, Goto, IfGoto,
-                 Callee, Caller
+                 Callee, Caller, Return
 
 FILENAME   = ""
 LABEL_CNT  = 0
@@ -23,6 +23,10 @@ function set_filename(name)
     return nothing
 end
 
+function _print(io::IO, msg)
+    println(io, INDENT * "// " * msg)
+end
+
 """
     cgen(io, commands::Union{VM, Vector{VM}})
 
@@ -40,9 +44,11 @@ end
 # Arithmetic
 ##############
 function cgen(io::IO, command::Add)
+    _print(io, "Add")
     _addsub(io, "+")
 end
 function cgen(io::IO, command::Sub)
+    _print(io, "Sub")
     _addsub(io, "-")
 end
 
@@ -65,10 +71,12 @@ function _addsub(io, op)
 end
 
 function cgen(io::IO, command::Neg)
+    _print(io, "neg")
     _negnot(io, "-")
 end
 
 function cgen(io::IO, command::Not)
+    _print(io, "not")
     _negnot(io, "!")
 end
 
@@ -81,14 +89,17 @@ function _negnot(io::IO, op)
 end
 
 function cgen(io::IO, command::Eq)
+    _print(io, "eq")
     _compare(io, "JEQ")
 end
 
 function cgen(io::IO, command::Gt)
+    _print(io, "gt")
     _compare(io, "JGT")
 end
 
 function cgen(io::IO, command::Lt)
+    _print(io, "lt")
     _compare(io, "JLT")
 end
 
@@ -127,10 +138,12 @@ function _compare(io::IO, jump)
 end
 
 function cgen(io::IO, comannd::And)
+    _print(io, "and")
     _andor(io, "&")
 end
 
 function cgen(io::IO, command::Or)
+    _print(io, "or")
     _andor(io, "|")
 end
 
@@ -152,16 +165,18 @@ end
 ############
 # push, pop
 ############
-
 function cgen(io::IO, command::Push)
-    command.arg1 == "constant" && _push_constant(io, command.arg2)
-    command.arg1 == "local"    && _push_segment(io, "LCL", command.arg2)
-    command.arg1 == "argument" && _push_segment(io, "ARG", command.arg2)
-    command.arg1 == "this"     && _push_segment(io, "THIS", command.arg2)
-    command.arg1 == "that"     && _push_segment(io, "THAT", command.arg2)
-    command.arg1 == "temp"     && _push_temp(io, command.arg2)
-    command.arg1 == "pointer"  && _push_pointer(io, command.arg2)
-    command.arg1 == "static"   && _push_static(io, command.arg2)
+    segment = command.arg1
+    offset = command.arg2
+    _print(io, "push $(segment) $(offset)")
+    segment == "constant" && _push_constant(io, offset)
+    segment == "local"    && _push_segment(io, "LCL", offset)
+    segment == "argument" && _push_segment(io, "ARG", offset)
+    segment == "this"     && _push_segment(io, "THIS", offset)
+    segment == "that"     && _push_segment(io, "THAT", offset)
+    segment == "temp"     && _push_temp(io, offset)
+    segment == "pointer"  && _push_pointer(io, offset)
+    segment == "static"   && _push_static(io, offset)
 end
 
 function _push_constant(io, arg)
@@ -233,13 +248,16 @@ end
 
 
 function cgen(io::IO, command::Pop)
-    command.arg1 == "local"    && _pop_segment(io, "LCL", command.arg2)
-    command.arg1 == "argument" && _pop_segment(io, "ARG", command.arg2)
-    command.arg1 == "this"     && _pop_segment(io, "THIS", command.arg2)
-    command.arg1 == "that"     && _pop_segment(io, "THAT", command.arg2)
-    command.arg1 == "temp"     && _pop_temp(io, command.arg2)
-    command.arg1 == "pointer"  && _pop_pointer(io, command.arg2)
-    command.arg1 == "static"   && _pop_static(io, command.arg2)
+    segment = command.arg1
+    offset = command.arg2
+    _print(io, "pop $(segment) $(offset)")
+    segment == "local"    && _pop_segment(io, "LCL", offset)
+    segment == "argument" && _pop_segment(io, "ARG", offset)
+    segment == "this"     && _pop_segment(io, "THIS", offset)
+    segment == "that"     && _pop_segment(io, "THAT", offset)
+    segment == "temp"     && _pop_temp(io, offset)
+    segment == "pointer"  && _pop_pointer(io, offset)
+    segment == "static"   && _pop_static(io, offset)
 end
 
 function _pop_segment(io::IO, seg, arg)
@@ -277,6 +295,7 @@ function _pop_temp(io::IO, arg)
     println(io, INDENT * "A=M")
     println(io, INDENT * "D=M")
 
+    # TEMP = R5
     # *(R5 + ith) = *SP
     ith = parse(Int, arg)
     println(io, INDENT * "@R$(5+ith)")
@@ -289,6 +308,7 @@ function _pop_pointer(io::IO, arg)
     println(io, INDENT * "A=M")
     println(io, INDENT * "D=M")
 
+    # POINTER = R3
     # *(R3 + ith) = *SP
     ith = parse(Int, arg)
     println(io, INDENT * "@R$(3+ith)")
@@ -311,15 +331,18 @@ end
 # branch
 #########
 function cgen(io::IO, label::Label)
+    _print(io, "label $(label.label)")
     println(io, "($(label.label))")
 end
 
 function cgen(io::IO, goto::Goto)
+    _print(io, "goto $(goto.label)")
     println(io, INDENT * "@$(goto.label)")
     println(io, INDENT * "0;JMP")
 end
 
 function cgen(io::IO, ifgoto::IfGoto)
+    _print(io, "if-goto $(ifgoto.label)")
     _spdec(io)
     println(io, INDENT * "A=M")
     println(io, INDENT * "D=M")
@@ -331,6 +354,7 @@ end
 # function
 ############
 function cgen(io::IO, callee::Callee)
+    _print(io, "function $(callee.name) $(callee.numlocal)")
     println(io, "($(callee.name))")
 
     for i in 1:callee.numlocal
@@ -343,8 +367,10 @@ function cgen(io::IO, callee::Callee)
     for item in callee.body
         cgen(io, item)
     end
+end
 
-
+function cgen(io::IO, ret::Return)
+    _print(io, "return")
     # FRAME = LCL
     println(io, INDENT * LCL)
     println(io, INDENT * "D=M")
@@ -355,7 +381,6 @@ function cgen(io::IO, callee::Callee)
     _relative_addr_frame(io, RET, 5)
 
     # *ARG = pop()
-    println(io, INDENT * "A=A // debug")
     _spdec(io)
     println(io, INDENT * "A=M")
     println(io, INDENT * "D=M")
@@ -389,18 +414,21 @@ function cgen(io::IO, callee::Callee)
 end
 
 function cgen(io::IO, caller::Caller)
+    _print(io, "call $(caller.name) $(caller.numargs)")
     # push return-address
     return_address_label = "RET_ADDR" * string(RETURN_CNT)
     global RETURN_CNT += 1
     return_address = "@" * return_address_label
 
+
+    # push return-address
+    _print(io, "push ($(return_address))")
     println(io, INDENT * return_address)
-    println(io, INDENT * "D=A")
+    println(io, INDENT * "D=A") # D=M if you use _push_stack
     println(io, INDENT * SP)
     println(io, INDENT * "A=M")
     println(io, INDENT * "M=D")
     _spinc(io)
-
 
     # push LCL
     _push_stack(io, LCL)
@@ -415,12 +443,23 @@ function cgen(io::IO, caller::Caller)
     _push_stack(io, THAT)
 
     # ARG = SP - n - 5 where n = caller.numargs
+    _print(io, "ARG = SP - n - 5")
     println(io, INDENT * "@$(caller.numargs + 5)")
     println(io, INDENT * "D=A")
     println(io, INDENT * SP)
-    println(io, INDENT * "M=M-D")
+    println(io, INDENT * "D=M-D")
+    println(io, INDENT * ARG)
+    println(io, INDENT * "M=D")
+
+    # LCL = SP
+    _print(io, "LCL = SP")
+    println(io, INDENT * SP)
+    println(io, INDENT * "D=M")
+    println(io, INDENT * LCL)
+    println(io, INDENT * "M=D")
 
     # goto f
+    _print(io, "goto $(caller.name)")
     println(io, INDENT * "@$(caller.name)")
     println(io, INDENT * "0;JMP")
 
@@ -429,6 +468,7 @@ function cgen(io::IO, caller::Caller)
 end
 
 function _relative_addr_frame(io::IO, addr, offset)
+    _print(io, "*($(addr)) = *(FRAME - $(offset))")
     println(io, INDENT * FRAME)
     println(io, INDENT * "D=M")
     println(io, INDENT * "@$(offset)")
@@ -440,21 +480,24 @@ end
 
 # SP++
 function _spinc(io::IO)
+    _print(io, "SP++")
     println(io, INDENT * SP)
     println(io, INDENT * "M=M+1")
 end
 
 # SP--
 function _spdec(io::IO)
+    _print(io, "SP--")
     println(io, INDENT * SP)
     println(io, INDENT * "M=M-1")
 end
 
 function _push_stack(io::IO, addr)
+    _print(io, "push ($(addr))")
     println(io, INDENT * addr)
-    println(io, INDENT * "A=M")
     println(io, INDENT * "D=M")
     println(io, INDENT * SP)
+    println(io, INDENT * "A=M")
     println(io, INDENT * "M=D")
     _spinc(io)
 end

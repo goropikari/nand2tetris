@@ -56,6 +56,8 @@ struct Caller <: _Function
     numargs::Int
 end
 
+struct Return <: _Function end
+
 
 struct None <: VM end
 
@@ -73,7 +75,6 @@ const arithmetic = Dict(
 
 function parse(tokens::Vector{Tuple{Symbol, String}})
     commands = VM[]
-    command = None()
     cnt = 1
     while !isnothing(iterate(tokens, cnt))
         token, cnt = iterate(tokens, cnt)
@@ -88,9 +89,14 @@ function parse(tokens::Vector{Tuple{Symbol, String}})
         elseif typ == :branch
             command, cnt = _branch(val, tokens, cnt)
         elseif typ == :function
-            command, cnt = _function(val, tokens, cnt) # val = function or call
+            if val == "return"
+                command = Return()
+            else
+                command, cnt = _function(val, tokens, cnt) # val = function or call
+            end
         else
-            throw(VMParseError("This token type isn't supported: $(string(op))"))
+            println(cnt)
+            throw(VMParseError("This token type isn't supported: $(token)"))
         end
         push!(commands, command)
     end
@@ -138,16 +144,16 @@ function _callee(tokens::Vector{Tuple{Symbol, String}}, cnt)
     numlocal, cnt = iterate(tokens, cnt)
     numlocal[1] != :digit && throw(VMParseError("$(numlocal[1]) ($(numlocal[2])) is not argument of function."))
 
-    idx = findnext(x -> x == (:function, "return"), tokens, cnt)
-    isnothing(idx) && throw(VMParseError("There is no `return`."))
-    body::Vector{VM} = parse(tokens[cnt:idx-1])
+    fn_idx = findnext(x -> x == (:function, "function"), tokens, cnt)
+    last_idx = isnothing(fn_idx) ? length(tokens) : fn_idx - 1
+    body::Vector{VM} = parse(tokens[cnt:last_idx])
     for item in body
         if item isa Branch
             item.label = "$(fn[2])\$$(item.label)"
         end
     end
 
-    return Callee(fn[2], Base.parse(Int, numlocal[2]), body), idx+1
+    return Callee(fn[2], Base.parse(Int, numlocal[2]), body), last_idx + 1
 end
 
 function _caller(tokens, cnt)
