@@ -9,5 +9,9 @@ using Pkg
 Pkg.instantiate()
 
 using VMTranslator
-VMTranslator.translate("/path/to/vmfile.vm", "/path/to/out.asm")
+VMTranslator.translate("/path/to/vmfile.vm")
+
+# or
+
+VMTranslator.translate("/path/to/vmfile_dir")
 ```
