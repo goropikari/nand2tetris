@@ -1,0 +1,356 @@
+function Main.main 9
+push constant 4
+pop local 2
+push constant 512
+push local 2
+call Math.divide 2
+pop local 4
+push constant 256
+push local 2
+call Math.divide 2
+pop local 5
+push local 4
+call Array.new 1
+pop local 0
+push local 4
+call Array.new 1
+pop local 1
+push local 4
+push constant 2
+call Math.divide 2
+pop local 3
+push constant 0
+pop local 6
+label WHILE_EXP0
+push local 6
+push local 4
+lt
+not
+if-goto WHILE_END0
+push local 6
+push local 0
+add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 6
+push constant 1
+add
+pop local 6
+goto WHILE_EXP0
+label WHILE_END0
+push local 3
+push local 0
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push constant 0
+pop local 6
+label WHILE_EXP1
+push local 6
+push local 5
+lt
+not
+if-goto WHILE_END1
+push constant 0
+pop local 7
+label WHILE_EXP2
+push local 7
+push local 4
+lt
+not
+if-goto WHILE_END2
+push local 6
+push constant 0
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push local 7
+push local 1
+add
+push local 7
+push local 0
+add
+pop pointer 1
+push that 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+goto IF_END0
+label IF_FALSE0
+push local 7
+push constant 1
+gt
+push local 7
+push local 4
+push constant 1
+sub
+lt
+and
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push local 7
+push constant 1
+sub
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 1
+eq
+push local 7
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 1
+eq
+and
+push local 7
+push constant 1
+add
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+and
+if-goto IF_TRUE2
+goto IF_FALSE2
+label IF_TRUE2
+push local 7
+push local 1
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+goto IF_END2
+label IF_FALSE2
+push local 7
+push constant 1
+sub
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 1
+eq
+push local 7
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+and
+push local 7
+push constant 1
+add
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+and
+if-goto IF_TRUE3
+goto IF_FALSE3
+label IF_TRUE3
+push local 7
+push local 1
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+goto IF_END3
+label IF_FALSE3
+push local 7
+push constant 1
+sub
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+push local 7
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 1
+eq
+and
+push local 7
+push constant 1
+add
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 1
+eq
+and
+if-goto IF_TRUE4
+goto IF_FALSE4
+label IF_TRUE4
+push local 7
+push local 1
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+goto IF_END4
+label IF_FALSE4
+push local 7
+push constant 1
+sub
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+push local 7
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 0
+eq
+and
+push local 7
+push constant 1
+add
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 1
+eq
+and
+if-goto IF_TRUE5
+goto IF_FALSE5
+label IF_TRUE5
+push local 7
+push local 1
+add
+push constant 1
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+goto IF_END5
+label IF_FALSE5
+push local 7
+push local 1
+add
+push constant 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+label IF_END5
+label IF_END4
+label IF_END3
+label IF_END2
+label IF_FALSE1
+label IF_END0
+push local 7
+push constant 1
+add
+pop local 7
+goto WHILE_EXP2
+label WHILE_END2
+push constant 0
+pop local 8
+label WHILE_EXP3
+push local 8
+push local 4
+lt
+not
+if-goto WHILE_END3
+push local 8
+push local 0
+add
+pop pointer 1
+push that 0
+push constant 1
+eq
+if-goto IF_TRUE6
+goto IF_FALSE6
+label IF_TRUE6
+push local 8
+push local 6
+push local 2
+call Main.draw 3
+pop temp 0
+label IF_FALSE6
+push local 8
+push local 0
+add
+push local 8
+push local 1
+add
+pop pointer 1
+push that 0
+pop temp 0
+pop pointer 1
+push temp 0
+pop that 0
+push local 8
+push constant 1
+add
+pop local 8
+goto WHILE_EXP3
+label WHILE_END3
+call Output.println 0
+pop temp 0
+push local 6
+push constant 1
+add
+pop local 6
+goto WHILE_EXP1
+label WHILE_END1
+push constant 0
+return
+function Main.draw 2
+push argument 0
+push argument 2
+call Math.multiply 2
+pop local 0
+push argument 1
+push argument 2
+call Math.multiply 2
+pop local 1
+push local 0
+push local 1
+push local 0
+push argument 2
+add
+push constant 1
+sub
+push local 1
+push argument 2
+add
+push constant 1
+sub
+call Screen.drawRectangle 4
+pop temp 0
+push constant 0
+return
