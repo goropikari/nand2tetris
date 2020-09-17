@@ -67,7 +67,7 @@ function _scan(l::Lexer)
     r_int = r"^[0-9]+"
     r_string = r"^\"[^\"]*\""
     symbol = ["{", "}", "\\(", "\\)", "\\[", "\\]", "\\.", ",", ";",
-              "\\+", "-", "\\*", "/", "&", "\\|", "<", ">", "=", "-"]
+              "\\+", "-", "\\*", "/", "&", "\\|", "<", ">", "=", "~"]
     r_symbol = _regex(symbol)
     token_regex = [
                    (Keyword        , r_keyword ),
@@ -170,9 +170,9 @@ function dump(io::IO, token::_Symbol)
     val = token.val
     xmlrep = ""
     if val == "<"
-        xmlrep = "&lt"
+        xmlrep = "&lt;"
     elseif val == ">"
-        xmlrep = "&gt"
+        xmlrep = "&gt;"
     elseif val == "&"
         xmlrep = "&amp;"
     else
