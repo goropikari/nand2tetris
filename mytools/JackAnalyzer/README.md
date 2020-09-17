@@ -17,11 +17,19 @@ end
 
 path = "/home/julia/projects/10/ExpressionLessSquare/Main.jack"
 writefile(path)
-
 path = "/home/julia/projects/10/ExpressionLessSquare/Square.jack"
 writefile(path)
-
 path = "/home/julia/projects/10/ExpressionLessSquare/SquareGame.jack"
+writefile(path)
+
+path = "/home/julia/projects/10/Square/Main.jack"
+writefile(path)
+path = "/home/julia/projects/10/Square/Square.jack"
+writefile(path)
+path = "/home/julia/projects/10/Square/SquareGame.jack"
+writefile(path)
+
+path = "/home/julia/projects/10/ArrayTest/Main.jack"
 writefile(path)
 ```
 
@@ -29,7 +37,16 @@ writefile(path)
 ```bash
 # In ubuntu container
 docker-compose run ubuntu bash
+cd ~/projects/10/ExpressionLessSquare/
 bash ~/tools/TextComparer.sh MainT.xml MyMainT.xml
 bash ~/tools/TextComparer.sh SquareT.xml MySquareT.xml
 bash ~/tools/TextComparer.sh SquareGameT.xml MySquareGameT.xml
+
+cd ~/projects/10/Square
+bash ~/tools/TextComparer.sh MainT.xml MyMainT.xml
+bash ~/tools/TextComparer.sh SquareT.xml MySquareT.xml
+bash ~/tools/TextComparer.sh SquareGameT.xml MySquareGameT.xml
+
+cd ~/projects/10/ArrayTest
+bash ~/tools/TextComparer.sh MainT.xml MyMainT.xml
 ```
