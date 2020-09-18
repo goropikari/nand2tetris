@@ -94,12 +94,8 @@ function class(parser::Parser)
     subr_decs = subroutine_decs(parser)
     accept(parser, RCPAREN)
 
-    return Class(name, class_var_decs, subr_decs)
+    return Class(name, var_decs, subr_decs)
 end
-
-
-function subroutine_decs(x) end
-
 
 function class_name(parser::Parser)
     if expect(parser, IDENTIFIER)
@@ -109,9 +105,102 @@ function class_name(parser::Parser)
     end
 end
 
+function subroutine_decs(parser::Parser)
+    subr_decs = []
+    while current_token(parser).enum in (CONSTRUCTOR, FUNCTION, METHOD)
+        push!(subr_decs, subroutine_dec(parser))
+    end
+    return subr_decs
+end
+
+function subroutine_dec(parser::Parser)
+    function type(parser)
+        token = current_token(parser)
+        if token.enum == VOID || istype(parser)
+            nexttoken(parser)
+            return token
+        end
+    end
+    function subrname(parser)
+        token = current_token(parser)
+        if expect(parser, IDENTIFIER)
+            nexttoken(parser)
+            return token
+        end
+    end
+    subr = current_token(parser)
+    nexttoken(parser)
+    typ = type(parser)
+    name = subrname(parser)
+    accept(parser, LPAREN)
+    params = parameters(parser)
+    accept(parser, RPAREN)
+    accept(parser, LCPAREN)
+    body = subroutinebody(parser)
+    accept(parser, RCPAREN)
+
+    return SubroutineDec(subr, typ, name, params, body)
+end
+
+struct SubroutineDec
+    subr
+    typ
+    name
+    params
+    body
+end
+
+function parameters(parser::Parser)
+    params = []
+    while istype(parser)
+        push!(params, parameter(parser))
+        accept(parser, COMMA)
+    end
+
+    return params
+end
+
+function istype(parser)
+    return current_token(parser).enum in (INT, CHAR, BOOLEAN, IDENTIFIER)
+end
+
+function parameter(parser::Parser)
+    function type(parser)
+        if istype(parser)
+            token = current_token(parser)
+            nexttoken(parser)
+            return token
+        end
+    end
+
+    typ = type(parser)
+    varname = if expect(parser, IDENTIFIER)
+        token = current_token(parser)
+        nexttoken(parser)
+        token
+    else
+        nothing
+    end
+
+    if isnothing(typ) && isnothing(varname)
+        return nothing
+    else
+        Parameter(typ, varname)
+    end
+end
+
+struct Parameter
+    type
+    name
+end
+
+function subroutinebody(parser::Parser)
+       
+end
+
 function class_var_decs(parser)
     vardecs = []
-    while current_token(parser) in (STATIC, FIELD)
+    while current_token(parser).enum in (STATIC, FIELD)
         push!(vardecs, class_var_dec(parser))
     end
 

@@ -9,6 +9,7 @@ export tokenize, dump
     METHOD
     FIELD
     STATIC
+    # CLASS_VAR_DEC
     VAR
     INT
     CHAR
@@ -25,11 +26,11 @@ export tokenize, dump
     WHILE
     RETURN
     LCPAREN   = Int('{')
-    RCPARNE   = Int('}')
+    RCPAREN   = Int('}')
     LPAREN    = Int('(')
-    RPARNE    = Int(')')
+    RPAREN    = Int(')')
     LSQPAREN  = Int('[')
-    RSQPARNE  = Int(']')
+    RSQPAREN  = Int(']')
     PERIOD    = Int('.')
     COMMA     = Int(',')
     SEMICOLON = Int(';')
@@ -73,11 +74,11 @@ end
 function resolve_enum(val::AbstractString)
     dict = Dict{AbstractString, TokenType}(
         "{"           => LCPAREN,
-        "}"           => RCPARNE,
+        "}"           => RCPAREN,
         "("           => LPAREN,
-        ")"           => RPARNE,
+        ")"           => RPAREN,
         "["           => LSQPAREN,
-        "]"           => RSQPARNE,
+        "]"           => RSQPAREN,
         "."           => PERIOD,
         ","           => COMMA,
         ";"           => SEMICOLON,
@@ -97,6 +98,8 @@ function resolve_enum(val::AbstractString)
         "method"      => METHOD,
         "field"       => FIELD,
         "static"      => STATIC,
+        # "field"       => CLASS_VAR_DEC,
+        # "static"      => CLASS_VAR_DEC,
         "var"         => VAR,
         "int"         => INT,
         "char"        => CHAR,
@@ -122,5 +125,6 @@ end
 include("tokenizer.jl")
 import .Tokenizer: tokenize, dump
 
+include("parser.jl")
 
 end # module
