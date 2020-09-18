@@ -1,5 +1,6 @@
 module Tokenizer
 
+import ..JackAnalyzer: Token, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
 export tokenize, dump
 
 struct TokenizeError <: Exception
@@ -7,32 +8,13 @@ struct TokenizeError <: Exception
 end
 Base.showerror(io::IO, err::TokenizeError) = print(io, "TokenizeError: $(err.msg)")
 
-########
-# Types
-########
 mutable struct Lexer
     input::String
     start::Int # start of lexeme
-    tokens
+    tokens::Vector{Token}
 
     function Lexer(input)
         new(input, 1, [])
-    end
-end
-
-abstract type Token end
-for typ in ("Keyword", "Identifier", "_Symbol", "IntegerConstant")
-    sym = Symbol(typ)
-    eval(quote
-        struct $sym <: Token
-            val
-        end
-    end)
-end
-struct StringConstant <: Token
-    val
-    function StringConstant(val)
-        new(match(r"\"?([^\"]*)\"?", val).captures[1])
     end
 end
 
