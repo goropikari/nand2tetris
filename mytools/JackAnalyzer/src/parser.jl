@@ -195,7 +195,45 @@ struct Parameter
 end
 
 function subroutinebody(parser::Parser)
-       
+    accept(parser, LCPAREN)
+    vars = body_var_decs(parser)
+    stmts = staments(parser)
+    accept(parser, RCPAREN)
+
+    return SubroutineBody(vars, stmts)
+end
+
+
+function body_var_decs(parser::Parser)
+    decs = []
+    while accept(parser, VAR)
+        vars = []
+        typ = nothing
+        istype(parser) || return nothing
+        typ = current_token(parser)
+        nexttoken(parser)
+        while expect(parser, IDENTIFIER)
+            push!(vars, current_token(parser))
+            nexttoken(parser)
+            accept(parser, COMMA)
+        end
+        accept(parser, SEMICOLON)
+        push!(decs, SubroutineBodyVarDec(typ, vars))
+    end
+    return decs
+end
+
+struct SubroutineBodyVarDec
+    typ
+    vars
+end
+
+struct SubroutineBody
+    vars::Vector{Union{Nothing, SubroutineBodyVarDec}}
+    stmts
+end
+
+function staments(parser::Parser)
 end
 
 function class_var_decs(parser)
