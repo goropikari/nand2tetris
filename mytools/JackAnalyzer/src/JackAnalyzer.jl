@@ -41,7 +41,7 @@ export tokenize, dump
     MUL       = Int('*')
     DIV       = Int('/')
     AND       = Int('&')
-    BAR       = Int('|')
+    OR        = Int('|')
     LT        = Int('<')
     GT        = Int('>')
     EQ        = Int('=')
@@ -100,7 +100,7 @@ function resolve_enum(val::AbstractString)
         "*"           => MUL,
         "/"           => DIV,
         "&"           => AND,
-        "|"           => BAR,
+        "|"           => OR,
         "<"           => LT,
         ">"           => GT,
         "="           => EQ,
