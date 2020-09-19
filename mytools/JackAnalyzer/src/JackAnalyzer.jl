@@ -72,6 +72,14 @@ struct StringConstant <: Token
         new(match(r"\"?([^\"]*)\"?", val).captures[1], STRING_CONST)
     end
 end
+struct NothingToken <: Token
+    val
+    enum
+
+    function NothingToken()
+        new(nothing, nothing)
+    end
+end
 
 function resolve_enum(val::AbstractString)
     if !isnothing(match(r"[0-9]+", val))

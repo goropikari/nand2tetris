@@ -1,6 +1,6 @@
 module CompilationEngine
 
-import ..JackAnalyzer: Token, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
+import ..JackAnalyzer: Token, NothingToken, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
 import ..JackAnalyzer: TokenType,
     IDENTIFIER,
     CLASS,
@@ -71,14 +71,14 @@ end
 function current(parser::Parser)
     if parser.pos <= length(parser.tokens)
         return parser.tokens[parser.pos]
-    else
-        nothing
     end
 end
 
 function next(parser::Parser)
     if parser.pos + 1 <= length(parser.tokens)
         return parser.tokens[parser.pos + 1]
+    else
+        return NothingToken()
     end
 end
 
@@ -454,6 +454,11 @@ function term(parser::Parser)
     if token.enum in (INT_CONST, STRING_CONST, TRUE, FALSE, NULL, THIS)
         advance!(parser)
         return token
+    elseif token.enum in (PLUS, MINUS)
+        op = token
+        advance!(parser)
+        expr = term(parser)
+        return UnaryOp(op, expr)
     elseif token.enum == LPAREN
         accept!(parser, LPAREN)
         expr = expression(parser)
@@ -476,6 +481,11 @@ function term(parser::Parser)
             return token
         end
     end
+end
+
+struct UnaryOp
+    op
+    expr
 end
 
 
