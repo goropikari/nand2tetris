@@ -413,10 +413,12 @@ end
 
 function return_stmt(parser::Parser)
     advance!(parser)
-    if expect(parser, SEMICOLON)
+    if accept!(parser, SEMICOLON)
         return Return(nothing)
     else
-        return Return(expression(parser))
+        expr = expression(parser)
+        accept!(parser, SEMICOLON)
+        return Return(expr)
     end
 end
 
@@ -437,8 +439,21 @@ function expressions(parser::Parser)
 end
 
 function expression(parser::Parser)
-    # TODO: support more term
-    return term(parser)
+    node = term(parser)
+    while isoperator(parser)
+        op = current(parser)
+        advance!(parser)
+        right = term(parser)
+        node = Operator(op, node, right)
+    end
+
+    return node
+end
+
+struct Operator
+    op
+    left
+    right
 end
 
 function isoperator(parser::Parser)
