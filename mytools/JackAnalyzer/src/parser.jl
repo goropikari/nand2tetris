@@ -77,7 +77,7 @@ function current(parser::Parser)
 end
 
 function next(parser::Parser)
-    if parser.pos + 1 < length(parser.tokens)
+    if parser.pos + 1 <= length(parser.tokens)
         return parser.tokens[parser.pos + 1]
     end
 end
