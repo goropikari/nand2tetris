@@ -103,6 +103,7 @@ end
 
 struct Let <: Statement
     var
+    arr_idx
     expr
 end
 
@@ -386,14 +387,14 @@ function let_stmt(parser)
         if accept!(parser, LSQPAREN) # array
             arr_idx = expression(parser)
             accept!(parser, RSQPAREN)
-            var = _Array(var, arr_idx)
+            # var = _Array(var, arr_idx)
         end
     end
     accept!(parser, EQ)
     expr = expression(parser)
     accept!(parser, SEMICOLON)
 
-    return Let(var, expr)
+    return Let(var, arr_idx, expr)
 end
 
 
@@ -628,9 +629,15 @@ function dump(io::IO, _let::Let)
     println(io, "<letStatement>")
     dump_kw(io, "let")
     dump(io, _let.var)
+    if !isnothing(_let.arr_idx)
+        dump_sym(io, "[")
+        dump(io, _let.arr_idx)
+        dump_sym(io, "]")
+    end
     dump_sym(io, "=")
     println(io, "<expression>")
     dump(io, _let.expr)
+    dump_sym(io, ";")
     println(io, "</expression>")
     println(io, "</letStatement>")
 end
@@ -646,4 +653,4 @@ function dump(io::IO, class::UnaryOp) end
 
 
 
-end # modul
+end # module
