@@ -12,6 +12,7 @@ export tokenize, dump
     # CLASS_VAR_DEC
     VAR
     INT
+    STRING
     CHAR
     BOOLEAN
     VOID
@@ -67,7 +68,7 @@ struct StringConstant <: Token
     val
     enum
     function StringConstant(val)
-        new(match(r"\"?([^\"]*)\"?", val).captures[1], resolve_enum(val))
+        new(match(r"\"?([^\"]*)\"?", val).captures[1], STRING)
     end
 end
 
