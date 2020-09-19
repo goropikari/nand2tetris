@@ -1,0 +1,136 @@
+@startuml
+class Class {
+    +name
+    +List[ClassVarDec] vardecs
+    +List[SubroutineDec] subrdecs
+}
+
+class ClassVarDec {
+    +deckw
+    +type
+    +List[VarName] varnames
+}
+
+class SubroutineDec {
+    +deckw
+    +type
+    +name
+    +List[Parameter] params
+    +SubroutineBody body
+}
+
+
+Class <-- ClassVarDec
+Class <-- SubroutineDec
+
+
+class Parameter {
+    +type
+    +name
+}
+
+SubroutineDec <-- Parameter
+
+class  SubroutineBody {
+    +List[VarDec] vardecs
+    +List[Statement] stmts
+}
+
+SubroutineDec <-- SubroutineBody
+
+class VarDec {
+    +type
+    +List[varName] varnames
+}
+
+abstract class Statement {}
+
+SubroutineBody <-- VarDec
+SubroutineBody <-- Statement
+
+class LetStmt {
+    +Union{VarName, Array} variable
+    +Expression expr
+}
+
+class IfStmt {
+    +Expression cond
+    +Statement then_stmt
+    +Union{Statement, Nothing} else_stmt
+}
+
+class WhileStmt {
+    +cond
+    +List[Statement] stmts
+}
+
+class DoStmt {
+    +SubroutineCall subr
+}
+
+class ReturnStmt {
+    +Union{Expression, Nothing} expr
+}
+
+Statement <|-- LetStmt
+Statement <|-- IfStmt
+Statement <|-- WhileStmt
+Statement <|-- DoStmt
+Statement <|-- ReturnStmt
+
+
+class Expression {
+    +Union{Term, Op}
+}
+
+abstract class Term {}
+
+class Op {
+    +op
+    +left
+    +right
+}
+
+Expression <-- Term
+Expression <-- Op
+
+class IntegerConst {
+    +val
+}
+class StringConst {
+    +val
+}
+class KeywordConst {
+    +val
+}
+class VarName {
+    +val
+}
+class Array {
+    +name
+    +Expresssion idx
+}
+class SubroutineCall {
+    +name
+    +classname
+    +List[Expression]
+}
+class Parenthesis {
+    +expr
+}
+class UnaryOp {
+    +op
+    +Term term
+}
+
+Term <|-- IntegerConst
+Term <|-- StringConst
+Term <|-- KeywordConst
+Term <|-- VarName
+Term <|-- Array
+Term <|-- SubroutineCall
+Term <|-- Parenthesis
+Term <|-- UnaryOp
+
+Statement <-- Expression
+@enduml
