@@ -12,7 +12,8 @@ export tokenize, dump
     # CLASS_VAR_DEC
     VAR
     INT
-    STRING
+    STRING_CONST
+    INT_CONST
     CHAR
     BOOLEAN
     VOID
@@ -68,11 +69,14 @@ struct StringConstant <: Token
     val
     enum
     function StringConstant(val)
-        new(match(r"\"?([^\"]*)\"?", val).captures[1], STRING)
+        new(match(r"\"?([^\"]*)\"?", val).captures[1], STRING_CONST)
     end
 end
 
 function resolve_enum(val::AbstractString)
+    if !isnothing(match(r"[0-9]+", val))
+        return INT_CONST
+    end
     dict = Dict{AbstractString, TokenType}(
         "{"           => LCPAREN,
         "}"           => RCPAREN,
