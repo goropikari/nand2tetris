@@ -309,7 +309,7 @@ function let_stmt(parser)
     if expect(parser, IDENTIFIER)
         var = current(parser)
         advance!(parser)
-        if accept!(parser, LSQPAREN)
+        if accept!(parser, LSQPAREN) # array
             arr_idx = expression(parser)
             accept!(parser, RSQPAREN)
             var = _Array(var, arr_idx)
@@ -376,15 +376,39 @@ end
 function do_stmt(parser::Parser)
     advance!(parser)
     call = subroutine_call(parser)
+    accept!(parser, SEMICOLON)
     return Do(call)
 end
 
-function subroutine_call(parser)
-    # TODO
+function subroutine_call(parser::Parser)
+    if expect(parser, IDENTIFIER)
+        obj = nothing
+        name = nothing
+        if next(parser).enum == PERIOD
+            obj = current(parser)
+            advance!(parser)
+            advance!(parser)
+            name = current(parser)
+        else
+            name = current(parser)
+        end
+        advance!(parser)
+        accept!(parser, LPAREN)
+        exprs = expressions(parser)
+        accept!(parser, RPAREN)
+
+        return SubroutineCall(obj, name, exprs)
+    end
+end
+
+struct SubroutineCall
+    obj
+    name
+    exprs
 end
 
 struct Do <: Statement
-    subr
+    subr::SubroutineCall
 end
 
 function return_stmt(parser::Parser)
@@ -398,6 +422,18 @@ end
 
 struct Return <: Statement
     expr
+end
+
+function expressions(parser::Parser)
+    exprs = []
+    expr = expression(parser)
+    push!(exprs, expr)
+    while accept!(parser, COMMA)
+        expr = expression(parser)
+        push!(exprs, expr)
+    end
+
+    return exprs
 end
 
 function expression(parser::Parser)
@@ -432,21 +468,9 @@ function term(parser::Parser)
             accept!(parser, RSQPAREN)
             return _Array(token, expr)
         elseif nexttoken.enum == PERIOD # external class subroutine
-            advance!(parser)
-            advance!(parser)
-            name = token
-            subr = current(parser)
-            advance!(parser)
-            accept(parser, LPAREN)
-            exprs = expressions(parser)
-            accept(parser, RPAREN)
-            return SubroutineCall(name, subr, exprs)
+            return subroutine_call(parser)
         elseif nexttoken.enum == LPAREN # subroutine
-            advance!(parser)
-            advance!(parser)
-            expr = expression(parser)
-            accept!(parser)
-            return expr
+            return subroutine_call(parser)
         else # simple variable
             advance!(parser)
             return token
