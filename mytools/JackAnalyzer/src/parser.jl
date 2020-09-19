@@ -631,7 +631,9 @@ function dump(io::IO, _let::Let)
     dump(io, _let.var)
     if !isnothing(_let.arr_idx)
         dump_sym(io, "[")
+        println(io, "<expression>")
         dump(io, _let.arr_idx)
+        println(io, "</expression>")
         dump_sym(io, "]")
     end
     dump_sym(io, "=")
@@ -646,7 +648,14 @@ function dump(io::IO, class::While) end
 function dump(io::IO, class::Do) end
 function dump(io::IO, class::Return) end
 function dump(io::IO, class::SubroutineCall) end
-function dump(io::IO, class::_Array) end
+function dump(io::IO, arr::_Array)
+    dump(io, arr.var)
+    dump_sym(io, "[")
+    println(io, "<expression>")
+    dump(io, arr.idx)
+    println(io, "</expression>")
+    dump_sym(io, "]")
+end
 function dump(io::IO, class::Operator) end
 function dump(io::IO, class::Expression) end
 function dump(io::IO, class::UnaryOp) end
