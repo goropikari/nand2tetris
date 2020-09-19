@@ -1,5 +1,6 @@
 module CompilationEngine
 
+import ..Tokenizer
 import ..JackAnalyzer: Token, NothingToken, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
 import ..JackAnalyzer: TokenType,
     IDENTIFIER,
@@ -9,7 +10,6 @@ import ..JackAnalyzer: TokenType,
     METHOD,
     FIELD,
     STATIC,
-    # CLASS_VAR_DEC,
     VAR,
     INT,
     STRING_CONST,
@@ -47,6 +47,9 @@ import ..JackAnalyzer: TokenType,
     EQ,
     TILDE
 
+#######
+# type
+#######
 mutable struct Parser
     pos::Int
     tokens::Vector{Token}
@@ -63,6 +66,80 @@ struct ClassVarDec
     deckw
     type
     varnames
+end
+
+struct SubroutineDec
+    subr # constructor, method, function
+    type
+    name
+    params
+    body
+end
+
+struct Parameter
+    type
+    name
+end
+
+struct SubroutineBodyVarDec
+    typ
+    vars
+end
+
+abstract type Statement end
+struct SubroutineBody
+    vardecs::Vector{Union{Nothing, SubroutineBodyVarDec}}
+    stmts::Vector{Statement}
+end
+
+struct Let <: Statement
+    var
+    expr
+end
+
+struct _Array
+    var
+    idx
+end
+
+struct If <: Statement
+    cond
+    then_stmt
+    else_stmt
+end
+
+struct While <: Statement
+    cond
+    stmts
+end
+
+struct SubroutineCall
+    obj
+    name
+    exprs
+end
+
+struct Do <: Statement
+    subr::SubroutineCall
+end
+
+struct Return <: Statement
+    expr
+end
+
+struct Operator
+    op
+    left
+    right
+end
+
+struct Expression
+    expr
+end
+
+struct UnaryOp
+    op
+    expr
 end
 
 ########
@@ -108,6 +185,20 @@ end
 ##################
 # parse functions
 ##################
+function program(input::String)
+    return program(IOBuffer(input))
+end
+function program(io::IO)
+    input = read(io, String)
+    lexer = Tokenizer.tokenize(input)
+    parser = Parser(1, lexer.tokens, nothing)
+    return program(parser)
+end
+function program(parser::Parser)
+    parser.parse_tree = class(parser)
+    return parser
+end
+
 function class(parser::Parser)
     function class_name(parser::Parser)
         if expect(parser, IDENTIFIER)
@@ -192,14 +283,6 @@ function subroutine_dec(parser::Parser)
     return SubroutineDec(subr, typ, name, params, body)
 end
 
-struct SubroutineDec
-    subr # constructor, method, function
-    type
-    name
-    params
-    body
-end
-
 function parameters(parser::Parser)
     params = []
     while istype(parser)
@@ -229,10 +312,6 @@ function parameter(parser::Parser)
     end
 end
 
-struct Parameter
-    type
-    name
-end
 
 function subroutinebody(parser::Parser)
     vars = body_var_decs(parser)
@@ -260,18 +339,6 @@ function body_var_decs(parser::Parser)
     return decs
 end
 
-struct SubroutineBodyVarDec
-    typ
-    vars
-end
-
-abstract type Statement end
-
-
-struct SubroutineBody
-    vardecs::Vector{Union{Nothing, SubroutineBodyVarDec}}
-    stmts::Vector{Statement}
-end
 
 function isstatement(parser::Parser)
     return current(parser).enum in (LET, IF, WHILE, DO, RETURN)
@@ -322,15 +389,6 @@ function let_stmt(parser)
     return Let(var, expr)
 end
 
-struct Let <: Statement
-    var
-    expr
-end
-
-struct _Array
-    var
-    idx
-end
 
 function if_stmt(parser)
     advance!(parser)
@@ -350,11 +408,6 @@ function if_stmt(parser)
     return If(cond, then_stmt, else_stmt)
 end
 
-struct If <: Statement
-    cond
-    then_stmt
-    else_stmt
-end
 
 function while_stmt(parser::Parser)
     advance!(parser)
@@ -368,10 +421,6 @@ function while_stmt(parser::Parser)
     return While(cond, stmts)
 end
 
-struct While <: Statement
-    cond
-    stmts
-end
 
 function do_stmt(parser::Parser)
     advance!(parser)
@@ -401,15 +450,6 @@ function subroutine_call(parser::Parser)
     end
 end
 
-struct SubroutineCall
-    obj
-    name
-    exprs
-end
-
-struct Do <: Statement
-    subr::SubroutineCall
-end
 
 function return_stmt(parser::Parser)
     advance!(parser)
@@ -422,9 +462,6 @@ function return_stmt(parser::Parser)
     end
 end
 
-struct Return <: Statement
-    expr
-end
 
 function expressions(parser::Parser)
     exprs = []
@@ -450,19 +487,11 @@ function expression(parser::Parser)
     return node
 end
 
-struct Operator
-    op
-    left
-    right
-end
 
 function isoperator(parser::Parser)
     return current(parser).enum in (PLUS, MINUS, MUL, DIV, AND, OR, LT, GT, EQ)
 end
 
-struct Expression
-    expr
-end
 
 function term(parser::Parser)
     token = current(parser)
@@ -496,11 +525,6 @@ function term(parser::Parser)
             return token
         end
     end
-end
-
-struct UnaryOp
-    op
-    expr
 end
 
 
