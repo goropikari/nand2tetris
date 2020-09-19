@@ -1,6 +1,7 @@
 module CompilationEngine
 
 import ..Tokenizer
+import ..Tokenizer: dump
 import ..JackAnalyzer: Token, NothingToken, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
 import ..JackAnalyzer: TokenType,
     IDENTIFIER,
@@ -54,6 +55,7 @@ mutable struct Parser
     pos::Int
     tokens::Vector{Token}
     parse_tree
+    input
 end
 
 struct Class
@@ -69,7 +71,7 @@ struct ClassVarDec
 end
 
 struct SubroutineDec
-    subr # constructor, method, function
+    deckw # constructor, method, function
     type
     name
     params
@@ -82,24 +84,26 @@ struct Parameter
 end
 
 struct SubroutineBodyVarDec
-    typ
+    type
     vars
 end
 
 abstract type Statement end
+
 struct SubroutineBody
-    vardecs::Vector{Union{Nothing, SubroutineBodyVarDec}}
+    vardecs::Vector{SubroutineBodyVarDec}
     stmts::Vector{Statement}
+end
+
+struct SubroutineCall
+    obj
+    name
+    exprs
 end
 
 struct Let <: Statement
     var
     expr
-end
-
-struct _Array
-    var
-    idx
 end
 
 struct If <: Statement
@@ -113,18 +117,17 @@ struct While <: Statement
     stmts
 end
 
-struct SubroutineCall
-    obj
-    name
-    exprs
-end
-
 struct Do <: Statement
     subr::SubroutineCall
 end
 
 struct Return <: Statement
     expr
+end
+
+struct _Array
+    var
+    idx
 end
 
 struct Operator
@@ -191,7 +194,7 @@ end
 function program(io::IO)
     input = read(io, String)
     lexer = Tokenizer.tokenize(input)
-    parser = Parser(1, lexer.tokens, nothing)
+    parser = Parser(1, lexer.tokens, nothing, lexer.input)
     return program(parser)
 end
 function program(parser::Parser)
@@ -492,7 +495,6 @@ function isoperator(parser::Parser)
     return current(parser).enum in (PLUS, MINUS, MUL, DIV, AND, OR, LT, GT, EQ)
 end
 
-
 function term(parser::Parser)
     token = current(parser)
     if token.enum in (INT_CONST, STRING_CONST, TRUE, FALSE, NULL, THIS)
@@ -526,6 +528,104 @@ function term(parser::Parser)
         end
     end
 end
+
+############
+# print xml
+############
+
+dump_tag(io, x, tag) = println(io, "<$tag> $x </$tag>")
+dump_kw(io, x) = dump_tag(io, x, "keyword")
+dump_sym(io, x) = dump_tag(io, x, "sym")
+
+function dump(io::IO, class::Class)
+    println(io, "<class>")
+    dump_kw(io, "class")
+    dump(io, class.name)
+    dump_sym(io, "{")
+    if !isempty(class.vardecs)
+        for vardec in class.vardecs
+            dump(io, vardec)
+        end
+    end
+    if !isempty(class.subrdecs)
+        for subrdec in class.subrdecs
+            dump(io, subrdec)
+        end
+    end
+    dump_sym(io, "}")
+    println(io, "</class>")
+end
+
+function dump(io::IO, vardec::ClassVarDec)
+    println(io, "<classVarDec>")
+    dump(io, vardec.deckw)
+    dump(io, vardec.type)
+    for (i, name) in enumerate(vardec.varnames)
+        i > 1 && dump_sym(io, ",")
+        dump(io, name)
+    end
+    dump_sym(io, ";")
+    println(io, "</classVarDec>")
+end
+function dump(io::IO, subrdec::SubroutineDec)
+    println(io, "<subroutineDec>")
+    dump(io, subrdec.deckw)
+    dump(io, subrdec.type)
+    dump(io, subrdec.name)
+    dump_sym(io, "(")
+    if !isempty(subrdec.params)
+        println(io, "<parameterList>")
+        for (i, param) in enumerate(subrdec.params)
+            i > 1 && dump_sym(io, ",")
+            dump(io, param)
+        end
+        println(io, "</parameterList>")
+    end
+    dump(io, subrdec.body)
+    dump_sym(io, ")")
+
+    println(io, "</subroutineDec>")
+end
+function dump(io::IO, param::Parameter)
+    dump(io, param.type)
+    dump(io, param.name)
+end
+function dump(io::IO, body::SubroutineBody)
+    dump_sym(io, "{")
+    if !isempty(body.vardecs)
+        for vardec in body.vardecs
+            dump(io, vardec)
+        end
+    end
+    if !isempty(body.stmts)
+        for stmt in body.stmts
+            dump(io, stmt)
+        end
+    end
+    dump_sym(io, "}")
+end
+function dump(io::IO, vardec::SubroutineBodyVarDec)
+    println(io, "<varDec>")
+    dump_kw(io, "var")
+    dump(io, vardec.type)
+    for (i, var) in enumerate(vardec.vars)
+        i > 1 && dump_sym(io, ",")
+        dump(io, var)
+    end
+    dump_sym(io, ";")
+    println(io, "</varDec>")
+end
+function dump(io::IO, _let::Let) end
+function dump(io::IO, class::If) end
+function dump(io::IO, class::While) end
+function dump(io::IO, class::Do) end
+function dump(io::IO, class::Return) end
+function dump(io::IO, class::SubroutineCall) end
+function dump(io::IO, class::_Array) end
+function dump(io::IO, class::Operator) end
+function dump(io::IO, class::Expression) end
+function dump(io::IO, class::UnaryOp) end
+
 
 
 end # modul
