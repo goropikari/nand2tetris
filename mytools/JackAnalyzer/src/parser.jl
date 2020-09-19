@@ -145,6 +145,10 @@ struct UnaryOp
     expr
 end
 
+struct Term
+    val
+end
+
 ########
 # utils
 ########
@@ -499,17 +503,17 @@ function term(parser::Parser)
     token = current(parser)
     if token.enum in (INT_CONST, STRING_CONST, TRUE, FALSE, NULL, THIS)
         advance!(parser)
-        return token
+        return Term(token)
     elseif token.enum in (PLUS, MINUS)
         op = token
         advance!(parser)
         expr = term(parser)
-        return UnaryOp(op, expr)
+        return Term(UnaryOp(op, Term(expr)))
     elseif token.enum == LPAREN
         accept!(parser, LPAREN)
         expr = expression(parser)
         accept!(parser, RPAREN)
-        return expr
+        return Term(expr)
     elseif token.enum == IDENTIFIER
         nexttoken = next(parser)
         if nexttoken.enum == LSQPAREN # array
@@ -517,14 +521,14 @@ function term(parser::Parser)
             advance!(parser)
             expr = expression(parser)
             accept!(parser, RSQPAREN)
-            return _Array(token, expr)
+            return  Term(_Array(token, expr))
         elseif nexttoken.enum == PERIOD # external class subroutine
-            return subroutine_call(parser)
+            return Term(subroutine_call(parser))
         elseif nexttoken.enum == LPAREN # subroutine
-            return subroutine_call(parser)
+            return Term(subroutine_call(parser))
         else # simple variable
             advance!(parser)
-            return token
+            return Term(token)
         end
     end
 end
@@ -615,7 +619,21 @@ function dump(io::IO, vardec::SubroutineBodyVarDec)
     dump_sym(io, ";")
     println(io, "</varDec>")
 end
-function dump(io::IO, _let::Let) end
+function dump(io::IO, _term::Term)
+    println(io, "<term>")
+    dump(io, _term.val)
+    println(io, "</term>")
+end
+function dump(io::IO, _let::Let)
+    println(io, "<letStatement>")
+    dump_kw(io, "let")
+    dump(io, _let.var)
+    dump_sym(io, "=")
+    println(io, "<expression>")
+    dump(io, _let.expr)
+    println(io, "</expression>")
+    println(io, "</letStatement>")
+end
 function dump(io::IO, class::If) end
 function dump(io::IO, class::While) end
 function dump(io::IO, class::Do) end
