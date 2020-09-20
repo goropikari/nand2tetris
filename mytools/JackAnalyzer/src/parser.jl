@@ -109,8 +109,8 @@ end
 
 struct If <: Statement
     cond
-    then_stmt
-    else_stmt
+    then_stmts
+    else_stmts
 end
 
 struct While <: Statement
@@ -126,6 +126,16 @@ struct Return <: Statement
     expr
 end
 
+abstract type Expression end
+struct Term <: Expression
+    val
+end
+
+struct UnaryOp <: Expression
+    op
+    expr
+end
+
 struct _Array
     var
     idx
@@ -135,19 +145,6 @@ struct Operator
     op
     left
     right
-end
-
-struct Expression
-    expr
-end
-
-struct UnaryOp
-    op
-    expr
-end
-
-struct Term
-    val
 end
 
 ########
@@ -404,16 +401,16 @@ function if_stmt(parser)
     cond = expression(parser)
     accept!(parser, RPAREN)
     accept!(parser, LCPAREN)
-    then_stmt = statements(parser)
+    then_stmts = statements(parser)
     accept!(parser, RCPAREN)
-    else_stmt = nothing
+    else_stmts = nothing
     if accept!(parser, ELSE)
         accept!(parser, LCPAREN)
-        else_stmt = statements(parser)
+        else_stmts = statements(parser)
         accept!(parser, RCPAREN)
     end
 
-    return If(cond, then_stmt, else_stmt)
+    return If(cond, then_stmts, else_stmts)
 end
 
 
@@ -537,129 +534,217 @@ end
 ############
 # print xml
 ############
+_space(depth) = "  " ^ depth
+function dump_xml(io::IO, x::Token, depth)
+    print("  " ^ depth)
+    dump(io, x)
+end
+dump_tag(io, x, tag, depth) = println(io, ("  "^depth) * "<$tag> $x </$tag>")
+dump_kw(io, x, depth) = dump_tag(io, x, "keyword", depth)
+dump_sym(io, x, depth) = dump_tag(io, x, "sym", depth)
 
-dump_tag(io, x, tag) = println(io, "<$tag> $x </$tag>")
-dump_kw(io, x) = dump_tag(io, x, "keyword")
-dump_sym(io, x) = dump_tag(io, x, "sym")
-
-function dump(io::IO, class::Class)
-    println(io, "<class>")
-    dump_kw(io, "class")
-    dump(io, class.name)
-    dump_sym(io, "{")
+function dump_xml(io::IO, class::Class, depth)
+    println(io, _space(depth) * "<class>")
+    dump_kw(io, "class", depth+1)
+    dump_xml(io, class.name, depth+1)
+    dump_sym(io, "{", depth+1)
     if !isempty(class.vardecs)
         for vardec in class.vardecs
-            dump(io, vardec)
+            dump_xml(io, vardec, depth+1)
         end
     end
     if !isempty(class.subrdecs)
         for subrdec in class.subrdecs
-            dump(io, subrdec)
+            dump_xml(io, subrdec, depth+1)
         end
     end
-    dump_sym(io, "}")
-    println(io, "</class>")
+    dump_sym(io, "}", 1)
+    println(io, _space(depth) * "</class>")
 end
 
-function dump(io::IO, vardec::ClassVarDec)
-    println(io, "<classVarDec>")
-    dump(io, vardec.deckw)
-    dump(io, vardec.type)
+function dump_xml(io::IO, vardec::ClassVarDec, depth)
+    SPACE = "  " ^ depth
+    println(io, SPACE * "<classVarDec>")
+    dump_xml(io, vardec.deckw, depth+1)
+    dump_xml(io, vardec.type, depth+1)
     for (i, name) in enumerate(vardec.varnames)
-        i > 1 && dump_sym(io, ",")
-        dump(io, name)
+        i > 1 && dump_sym(io, ",", depth+1)
+        dump_xml(io, name, depth+1)
     end
-    dump_sym(io, ";")
-    println(io, "</classVarDec>")
+    dump_sym(io, ";", depth+1)
+    println(io, SPACE * "</classVarDec>")
 end
-function dump(io::IO, subrdec::SubroutineDec)
-    println(io, "<subroutineDec>")
-    dump(io, subrdec.deckw)
-    dump(io, subrdec.type)
-    dump(io, subrdec.name)
-    dump_sym(io, "(")
-    if !isempty(subrdec.params)
-        println(io, "<parameterList>")
-        for (i, param) in enumerate(subrdec.params)
-            i > 1 && dump_sym(io, ",")
-            dump(io, param)
-        end
-        println(io, "</parameterList>")
-    end
-    dump(io, subrdec.body)
-    dump_sym(io, ")")
+function dump_xml(io::IO, subrdec::SubroutineDec, depth)
+    println(io, _space(depth) * "<subroutineDec>")
+    dump_xml(io, subrdec.deckw, depth+1)
+    dump_xml(io, subrdec.type, depth+1)
+    dump_xml(io, subrdec.name, depth+1)
 
-    println(io, "</subroutineDec>")
+    dump_sym(io, "(", depth+1)
+    println(io, _space(depth+1) * "<parameterList>")
+    if !isempty(subrdec.params)
+        for (i, param) in enumerate(subrdec.params)
+            i > 1 && dump_sym(io, ",", depth+2)
+            dump_xml(io, param, depth+2)
+        end
+    end
+    println(io, _space(depth+1) * "</parameterList>")
+    dump_sym(io, ")", depth+1)
+
+    dump_xml(io, subrdec.body, depth)
+
+    println(io, _space(depth) * "</subroutineDec>")
 end
-function dump(io::IO, param::Parameter)
-    dump(io, param.type)
-    dump(io, param.name)
+function dump_xml(io::IO, param::Parameter, depth)
+    dump_xml(io, param.type, depth)
+    dump_xml(io, param.name, depth)
 end
-function dump(io::IO, body::SubroutineBody)
-    dump_sym(io, "{")
+function dump_xml(io::IO, body::SubroutineBody, depth)
+    dump_sym(io, "{", depth+1)
     if !isempty(body.vardecs)
         for vardec in body.vardecs
-            dump(io, vardec)
+            dump_xml(io, vardec, depth+1)
         end
     end
     if !isempty(body.stmts)
+        println(io, _space(depth+1) * "<statements>")
         for stmt in body.stmts
-            dump(io, stmt)
+            dump_xml(io, stmt, depth+2)
         end
+        println(io, _space(depth+1) * "</statements>")
     end
-    dump_sym(io, "}")
+    dump_sym(io, "}", depth)
 end
-function dump(io::IO, vardec::SubroutineBodyVarDec)
-    println(io, "<varDec>")
-    dump_kw(io, "var")
-    dump(io, vardec.type)
+function dump_xml(io::IO, vardec::SubroutineBodyVarDec, depth)
+    println(io, _space(depth) * "<varDec>")
+    dump_kw(io, "var", depth+1)
+    dump_xml(io, vardec.type, depth+1)
     for (i, var) in enumerate(vardec.vars)
-        i > 1 && dump_sym(io, ",")
-        dump(io, var)
+        i > 1 && dump_sym(io, ",", depth+1)
+        dump_xml(io, var, depth+1)
     end
-    dump_sym(io, ";")
-    println(io, "</varDec>")
+    dump_sym(io, ";", depth+1)
+    println(io, _space(depth) * "</varDec>")
 end
-function dump(io::IO, _term::Term)
-    println(io, "<term>")
-    dump(io, _term.val)
-    println(io, "</term>")
+function dump_xml(io::IO, _term::Term, depth)
+    println(io, _space(depth) * "<term>")
+    dump_xml(io, _term.val, depth+1)
+    println(io, _space(depth) * "</term>")
 end
-function dump(io::IO, _let::Let)
-    println(io, "<letStatement>")
-    dump_kw(io, "let")
-    dump(io, _let.var)
+function dump_xml(io::IO, _let::Let, depth)
+    println(io, _space(depth) * "<letStatement>")
+    dump_kw(io, "let", depth+1)
+    dump_xml(io, _let.var, depth+1)
     if !isnothing(_let.arr_idx)
-        dump_sym(io, "[")
-        println(io, "<expression>")
-        dump(io, _let.arr_idx)
-        println(io, "</expression>")
-        dump_sym(io, "]")
+        dump_sym(io, "[", depth+1)
+        println(io, _space(depth+1) * "<expression>")
+        dump_xml(io, _let.arr_idx, depth+2)
+        println(io, _space(depth+1) * "</expression>")
+        dump_sym(io, "]", depth+1)
     end
-    dump_sym(io, "=")
-    println(io, "<expression>")
-    dump(io, _let.expr)
-    dump_sym(io, ";")
-    println(io, "</expression>")
-    println(io, "</letStatement>")
+    dump_sym(io, "=", depth+1)
+    println(io, _space(depth+1) * "<expression>")
+    dump_xml(io, _let.expr, depth+2)
+    dump_sym(io, ";", depth+2)
+    println(io, _space(depth+1) * "</expression>")
+    println(io, _space(depth) * "</letStatement>")
 end
-function dump(io::IO, class::If) end
-function dump(io::IO, class::While) end
-function dump(io::IO, class::Do) end
-function dump(io::IO, class::Return) end
-function dump(io::IO, class::SubroutineCall) end
-function dump(io::IO, arr::_Array)
-    dump(io, arr.var)
-    dump_sym(io, "[")
-    println(io, "<expression>")
-    dump(io, arr.idx)
-    println(io, "</expression>")
-    dump_sym(io, "]")
+function dump_xml(io::IO, _if::If, depth)
+    println(io, _space(depth) * "<ifStatement>")
+    dump_kw(io, "if", depth+1)
+    dump_sym(io, "(", depth+1)
+    dump_xml(io, _if.cond, depth+1)
+    dump_sym(io, ")", depth+1)
+
+    dump_sym(io, "{", depth+1)
+    println(io, _space(depth+1) * "<statements>")
+    for stmt in _if.then_stmts
+        dump_xml(io, stmt, depth+2)
+    end
+    println(io, _space(depth+1) * "</statements>")
+    dump_sym(io, "}", depth+1)
+
+    if !isempty(_if.else_stmts)
+        dump_kw(io, "else", depth+1)
+        dump_sym(io, "{", depth+1)
+        println(io, _space(depth+1) * "<statements>")
+        for stmt in _if.else_stmts
+            dump_xml(io, stmt, depth+2)
+        end
+        println(io, _space(depth+1) * "</statements>")
+        dump_sym(io, "}", depth+1)
+    end
+
+    println(io, _space(depth) * "</ifStatement>")
 end
-function dump(io::IO, class::Operator) end
-function dump(io::IO, class::Expression) end
-function dump(io::IO, class::UnaryOp) end
+function dump_xml(io::IO, _while::While, depth)
+    println(io, _space(depth) * "<whileStatement>")
+    dump_kw(io, "while", depth+1)
 
+    dump_sym(io, "(", depth+1)
+    println(io, _space(depth+1) * "<expression>")
+    dump_xml(io, _while.cond, depth+2)
+    println(io, _space(depth+1) * "</expression>")
+    dump_sym(io, ")", depth+1)
 
+    dump_sym(io, "{", depth+1)
+    println(io, _space(depth+1) * "<statements>")
+    for stmt in _while.stmts
+        dump_xml(io, stmt, depth+2)
+    end
+    println(io, _space(depth+1) * "</statements>")
+    dump_sym(io, "}", depth+1)
+
+    println(io, _space(depth) * "</whileStatement>")
+end
+function dump_xml(io::IO, _do::Do, depth)
+    println(io, _space(depth) * "<doStatement>")
+    dump_kw(io, "do", depth+1)
+    dump_xml(io, _do.subr, depth+1)
+    println(io, _space(depth) * "</doStatement>")
+end
+function dump_xml(io::IO, ret::Return, depth)
+    println(io, _space(depth) * "<returnStatement>")
+    dump_kw(io, "return", depth+1)
+    if !isnothing(ret.expr)
+        println(io, _space(depth+1) * "<expression>")
+        dump_xml(io, ret.expr, depth+2)
+        println(io, _space(depth+1) * "</expression>")
+    end
+    dump_sym(io, ";", depth+1)
+    println(io, _space(depth) * "</returnStatement>")
+end
+function dump_xml(io::IO, call::SubroutineCall, depth)
+    if !isnothing(call.obj)
+        dump_xml(io, call.obj, depth)
+        dump_sym(io, ".", depth)
+    end
+    dump_xml(io, call.name, depth)
+    dump_sym(io, "(", depth)
+    println(io, _space(depth) * "<expressionList>")
+    for expr in call.exprs
+        dump_xml(io, expr, depth+1)
+    end
+    println(io, _space(depth) * "</expressionList>")
+    dump_sym(io, ")", depth)
+    dump_sym(io, ";", depth)
+end
+function dump_xml(io::IO, arr::_Array, depth)
+    dump_xml(io, arr.var, depth)
+    dump_sym(io, "[", depth)
+    println(io, _space(depth) * "<expression>")
+    dump_xml(io, arr.idx, depth)
+    println(io, _space(depth) * "</expression>")
+    dump_sym(io, "]", depth)
+end
+function dump_xml(io::IO, op::Operator, depth)
+    dump_xml(io, op.left, depth)
+    dump_xml(io, op.op, depth)
+    dump_xml(io, op.right, depth)
+end
+function dump_xml(io::IO, unaryop::UnaryOp, depth)
+    dump_xml(io, unaryop.op, depth)
+    dump_xml(io, unaryop.expr, depth)
+end
 
 end # module
