@@ -58,6 +58,10 @@ mutable struct Parser
     input
 end
 
+struct Program
+    class
+end
+
 struct Class
     name
     vardecs
@@ -200,7 +204,7 @@ function program(io::IO)
     return program(parser)
 end
 function program(parser::Parser)
-    parser.parse_tree = class(parser)
+    parser.parse_tree = Program(class(parser))
     return parser
 end
 
@@ -543,6 +547,9 @@ dump_tag(io, x, tag, depth) = println(io, ("  "^depth) * "<$tag> $x </$tag>")
 dump_kw(io, x, depth) = dump_tag(io, x, "keyword", depth)
 dump_sym(io, x, depth) = dump_tag(io, x, "sym", depth)
 
+function dump_xml(io, prog::Program)
+    dump_xml(io, prog.class, 0)
+end
 function dump_xml(io::IO, class::Class, depth)
     println(io, _space(depth) * "<class>")
     dump_kw(io, "class", depth+1)
