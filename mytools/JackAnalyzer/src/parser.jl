@@ -407,7 +407,7 @@ function if_stmt(parser)
     accept!(parser, LCPAREN)
     then_stmts = statements(parser)
     accept!(parser, RCPAREN)
-    else_stmts = nothing
+    else_stmts = []
     if accept!(parser, ELSE)
         accept!(parser, LCPAREN)
         else_stmts = statements(parser)
@@ -540,12 +540,12 @@ end
 ############
 _space(depth) = "  " ^ depth
 function dump_xml(io::IO, x::Token, depth)
-    print("  " ^ depth)
+    print(io, "  " ^ depth)
     dump(io, x)
 end
 dump_tag(io, x, tag, depth) = println(io, ("  "^depth) * "<$tag> $x </$tag>")
 dump_kw(io, x, depth) = dump_tag(io, x, "keyword", depth)
-dump_sym(io, x, depth) = dump_tag(io, x, "sym", depth)
+dump_sym(io, x, depth) = dump_tag(io, x, "symbol", depth)
 
 function dump_xml(io, prog::Program)
     dump_xml(io, prog.class, 0)
@@ -607,6 +607,7 @@ function dump_xml(io::IO, param::Parameter, depth)
     dump_xml(io, param.name, depth)
 end
 function dump_xml(io::IO, body::SubroutineBody, depth)
+    println(io, _space(depth) * "<subroutineBody>")
     dump_sym(io, "{", depth+1)
     if !isempty(body.vardecs)
         for vardec in body.vardecs
@@ -621,6 +622,7 @@ function dump_xml(io::IO, body::SubroutineBody, depth)
         println(io, _space(depth+1) * "</statements>")
     end
     dump_sym(io, "}", depth)
+    println(io, _space(depth) * "</subroutineBody>")
 end
 function dump_xml(io::IO, vardec::SubroutineBodyVarDec, depth)
     println(io, _space(depth) * "<varDec>")
@@ -652,15 +654,17 @@ function dump_xml(io::IO, _let::Let, depth)
     dump_sym(io, "=", depth+1)
     println(io, _space(depth+1) * "<expression>")
     dump_xml(io, _let.expr, depth+2)
-    dump_sym(io, ";", depth+2)
     println(io, _space(depth+1) * "</expression>")
+    dump_sym(io, ";", depth+2)
     println(io, _space(depth) * "</letStatement>")
 end
 function dump_xml(io::IO, _if::If, depth)
     println(io, _space(depth) * "<ifStatement>")
     dump_kw(io, "if", depth+1)
     dump_sym(io, "(", depth+1)
-    dump_xml(io, _if.cond, depth+1)
+    println(io, _space(depth+1) * "<expression>")
+    dump_xml(io, _if.cond, depth+2)
+    println(io, _space(depth+1) * "</expression>")
     dump_sym(io, ")", depth+1)
 
     dump_sym(io, "{", depth+1)
@@ -729,8 +733,11 @@ function dump_xml(io::IO, call::SubroutineCall, depth)
     dump_xml(io, call.name, depth)
     dump_sym(io, "(", depth)
     println(io, _space(depth) * "<expressionList>")
-    for expr in call.exprs
-        dump_xml(io, expr, depth+1)
+    for (i, expr) in enumerate(call.exprs)
+        i > 1 && dump_sym(io, ",", depth+1)
+        println(io, _space(depth+1) * "<expression>")
+        dump_xml(io, expr, depth+2)
+        println(io, _space(depth+1) * "</expression>")
     end
     println(io, _space(depth) * "</expressionList>")
     dump_sym(io, ")", depth)
