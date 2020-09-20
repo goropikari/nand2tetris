@@ -9,7 +9,6 @@ export tokenize, dump
     METHOD
     FIELD
     STATIC
-    # CLASS_VAR_DEC
     VAR
     INT
     STRING_CONST
@@ -111,8 +110,6 @@ function resolve_enum(val::AbstractString)
         "method"      => METHOD,
         "field"       => FIELD,
         "static"      => STATIC,
-        # "field"       => CLASS_VAR_DEC,
-        # "static"      => CLASS_VAR_DEC,
         "var"         => VAR,
         "int"         => INT,
         "char"        => CHAR,
@@ -138,6 +135,33 @@ end
 include("tokenizer.jl")
 import .Tokenizer: tokenize, dump
 
+# module CompilationEngine end
 include("parser.jl")
+import .CompilationEngine: program
+
+function genxml(path)
+    if isdir(path)
+        files = readdir(path)
+        jackfiles = filter(x -> occursin(r".jack$", x), files)
+        for file in jackfiles
+            _genxml(joinpath(path, file))
+        end
+    elseif occursin(r".jack$", path)
+        _genxml(path)
+    end
+end
+
+function _genxml(path)
+    src = open(path, "r") do fp
+        read(fp, String)
+    end
+    out = split(path, ".")[1] * "My.xml"
+    println(out)
+    open(out, "w") do fp
+        prog = JackAnalyzer.CompilationEngine.program(src)
+        JackAnalyzer.CompilationEngine.dump_xml(fp, prog.parse_tree)
+    end
+end
+
 
 end # module

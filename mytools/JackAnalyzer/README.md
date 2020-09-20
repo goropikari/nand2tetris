@@ -50,3 +50,30 @@ bash ~/tools/TextComparer.sh SquareGameT.xml MySquareGameT.xml
 cd ~/projects/10/ArrayTest
 bash ~/tools/TextComparer.sh MainT.xml MyMainT.xml
 ```
+
+
+Test parser
+```
+docker-compose run julia bash
+cd /home/julia/mytools/JackAnalyzer
+julia --project=.
+julia> JackAnalyzer.genxml("/home/julia/projects/10/ExpressionLessSquare/")
+julia> JackAnalyzer.genxml("/home/julia/projects/10/Square/")
+julia> JackAnalyzer.genxml("/home/julia/projects/10/ArrayTest/")
+
+
+
+docker-compose run ubuntu bash
+cd /home/ubuntu/projects/10/ExpressionLessSquare
+bash ~/tools/TextComparer.sh Main.xml MainMy.xml
+bash ~/tools/TextComparer.sh Square.xml SquareMy.xml
+bash ~/tools/TextComparer.sh SquareGame.xml SquareGameMy.xml
+
+cd /home/ubuntu/projects/10/Square
+bash ~/tools/TextComparer.sh Main.xml MainMy.xml
+bash ~/tools/TextComparer.sh Square.xml SquareMy.xml
+bash ~/tools/TextComparer.sh SquareGame.xml SquareGameMy.xml
+
+cd /home/ubuntu/projects/10/ArrayTest
+bash ~/tools/TextComparer.sh Main.xml MainMy.xml
+```

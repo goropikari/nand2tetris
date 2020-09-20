@@ -135,6 +135,10 @@ struct Term <: Expression
     val
 end
 
+struct Parenthesis <: Expression
+    val
+end
+
 struct UnaryOp <: Expression
     op
     expr
@@ -506,16 +510,16 @@ function term(parser::Parser)
     if token.enum in (INT_CONST, STRING_CONST, TRUE, FALSE, NULL, THIS)
         advance!(parser)
         return Term(token)
-    elseif token.enum in (PLUS, MINUS)
+    elseif token.enum in (MINUS, TILDE)
         op = token
         advance!(parser)
         expr = term(parser)
-        return Term(UnaryOp(op, Term(expr)))
+        return Term(UnaryOp(op, expr))
     elseif token.enum == LPAREN
         accept!(parser, LPAREN)
         expr = expression(parser)
         accept!(parser, RPAREN)
-        return Term(expr)
+        return Term(Parenthesis(expr))
     elseif token.enum == IDENTIFIER
         nexttoken = next(parser)
         if nexttoken.enum == LSQPAREN # array
@@ -712,6 +716,7 @@ function dump_xml(io::IO, _do::Do, depth)
     println(io, _space(depth) * "<doStatement>")
     dump_kw(io, "do", depth+1)
     dump_xml(io, _do.subr, depth+1)
+    dump_sym(io, ";", depth)
     println(io, _space(depth) * "</doStatement>")
 end
 function dump_xml(io::IO, ret::Return, depth)
@@ -741,7 +746,6 @@ function dump_xml(io::IO, call::SubroutineCall, depth)
     end
     println(io, _space(depth) * "</expressionList>")
     dump_sym(io, ")", depth)
-    dump_sym(io, ";", depth)
 end
 function dump_xml(io::IO, arr::_Array, depth)
     dump_xml(io, arr.var, depth)
@@ -757,8 +761,15 @@ function dump_xml(io::IO, op::Operator, depth)
     dump_xml(io, op.right, depth)
 end
 function dump_xml(io::IO, unaryop::UnaryOp, depth)
-    dump_xml(io, unaryop.op, depth)
-    dump_xml(io, unaryop.expr, depth)
+    dump_xml(io, unaryop.op, depth+1)
+    dump_xml(io, unaryop.expr, depth+1)
+end
+function dump_xml(io::IO, paren::Parenthesis, depth)
+    dump_sym(io, "(", depth)
+    println(io, _space(depth) * "<expression>")
+    dump_xml(io, paren.val, depth+1)
+    println(io, _space(depth) * "</expression>")
+    dump_sym(io, ")", depth)
 end
 
 end # module
