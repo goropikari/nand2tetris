@@ -471,7 +471,7 @@ end
 function expressions(parser::Parser)
     exprs = []
     expr = expression(parser)
-    push!(exprs, expr)
+    !isnothing(expr) && push!(exprs, expr)
     while accept!(parser, COMMA)
         expr = expression(parser)
         push!(exprs, expr)
