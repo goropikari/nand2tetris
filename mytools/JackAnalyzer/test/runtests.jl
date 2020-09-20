@@ -81,3 +81,44 @@ using Test
     @test expected == String(io.data)
 end
 
+
+@testset "Parser" begin
+    program = """
+
+    /** hoge */
+
+    /* piyo */
+
+    class Main {
+        static int x, y;
+        field int z;
+        function void main() {
+            var boolean a, b;
+            var int c, d;
+
+            return;
+        }
+        function void foo(int a) {
+            var int x, y;
+            if (true) {
+                let x = 123;
+            } else {
+                let y = 456;
+            }
+            while (true) {
+                let abc = hogehoge;
+            }
+            let x[i] = 1
+            let x = arr[10]; // piyo
+            let y = (-2); /* fuga */
+            do Output.printInt(x);
+            do Output.printInt(y);
+            do Output.printString("Hello world");
+
+            return x + 10;
+        }
+    }
+    """
+    x = JackAnalyzer.CompilationEngine.program(program)
+    JackAnalyzer.CompilationEngine.dump(stdout, x.parse_tree)
+end
