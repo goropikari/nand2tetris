@@ -159,7 +159,7 @@ $\text{C-instruction} = 111a c_1 c_2 c_3 c_4 c_5 c_6 d_1 d_2 d_3 j_1 j_2 j_3$
                  & + j_1 \cdot j_2 \cdot j_3 \text{~~~~~~ (JMP)}
 \end{align*}
 
-\setcounter{chapter}{6}
+ \setcounter{chapter}{6}
 \chapter{Virtual Machine I: Stack Arithmetic}
 \section{Arithmetic}
 
@@ -533,4 +533,253 @@ where \texttt{segment = local, argument, this, that}.
         \texttt{ M=D     }
     \end{cases}
 \]
+
+\setcounter{chapter}{10}
+\chapter{Compiler II: Code Generation}
+
+\texttt{label} \textit{symbol}
+
+\texttt{goto} \textit{symbol}
+
+\texttt{if-goto} \textit{symbol}
+
+\texttt{function} \textit{functionName nLocals}
+
+\texttt{call} \textit{functionName nArgs}
+
+
+
+
+\section*{Expression}
+
+\subsection*{Integer constant}
+\begin{align*}
+    \texttt{cgen(n) = push constant n}
+\end{align*}
+where \texttt{n} is an integer.
+
+\subsection*{String constant}
+\begin{align*}
+    \texttt{cgen(str)} =
+    & \texttt{ push constant length(str)} \\
+    & \texttt{ call String.new 1 } \\
+    & \texttt{ push constant ASCII(str1)} \\
+    & \texttt{ call String.appendChar 2} \\
+    & \texttt{ push constant ASCII(str2)} \\
+    & \texttt{ call String.appendChar 2} \\
+    & ~ ~ ~ ~ \vdots \\
+    & \texttt{ push constant ASCII(strn)} \\
+    & \texttt{ call String.appendChar 2}
+\end{align*}
+where \texttt{str} is a string constant, \texttt{stri} is ith character of str, \texttt{ASCII(x)} is ASCII number of char \texttt{x} and \texttt{n} is the length of \texttt{str}.
+
+
+\subsection*{Keyword constant}
+\begin{align*}
+    \texttt{cgen(true)} = & \texttt{ push constant 0} \\
+    & \texttt{ neg }
+\end{align*}
+
+\begin{align*}
+    \texttt{cgen(false)} = & \texttt{ push constant 0}
+\end{align*}
+
+\begin{align*}
+    \texttt{cgen(null)} = & \texttt{ push constant 0}
+\end{align*}
+
+\begin{align*}
+    \texttt{cgen(this)} = & \texttt{ push pointer 0}
+\end{align*}
+
+
+\subsection*{Variable}
+\begin{align*}
+    \texttt{cgen(x) = push segment i}
+\end{align*}
+where \texttt{x} is a variable and \colorbox{bl}{\texttt{segment i}} is related to \texttt{x}.
+
+
+\begin{align*}
+    \texttt{ cgen( arr[expr] )} = & \texttt{ cgen( expr )} \\
+    & \texttt{ push segment i} \\
+    & \texttt{ add } \\
+    & \texttt{ pop pointer 1} \\
+    & \texttt{ push that 0}
+\end{align*}
+where \texttt{arr} is an Array and \colorbox{bl}{\texttt{segment i}} is related to \texttt{arr}.
+
+
+\subsection*{Subroutine Call}
+\begin{align*}
+    \texttt{cgen(\textit{subroutineName}(expressionList))} = & \texttt{ push pointer 0} \\
+    & \texttt{ cgen(expressionList)} \\
+    & \texttt{ call \textit{ClassName}.\textit{subroutineName} z}
+\end{align*}
+where \colorbox{bl}{\texttt{ClassName}} is the name of class that \textit{subroutineName} belong to and
+$\texttt{z} = nArgs + 1$.
+
+\begin{align*}
+    \texttt{cgen(\textit{obj}.\textit{subroutineName}(expressionList))} = & \texttt{ cgen(\textit{obj}) } \\
+    & \texttt{ cgen(expressionList)} \\
+    & \texttt{ call \textit{ClassName}.\textit{subroutineName} z}
+\end{align*}
+where \colorbox{bl}{\texttt{ClassName}} is the class name of \textit{obj} and
+$\texttt{z} = nArgs + 1$.
+
+\begin{align*}
+    \texttt{cgen(\textit{className}.\textit{subroutineName}(expressionList))} = & \texttt{ cgen(expressionList)} \\
+    & \texttt{ call \textit{ClassName}.\textit{subroutineName} nArgs}
+\end{align*}
+
+
+\begin{align*}
+    \texttt{ cgen(expressionList) } = & \texttt{ cgen(expr1, expr2, \dots, exprn) } \\
+    = & \texttt{ cgen(expr1)} \\
+      & ~ ~ ~ ~ \vdots \\
+      & \texttt{ cgen(exprn)}
+\end{align*}
+
+\subsection*{Parenthesis}
+\begin{align*}
+    \texttt{cgen\{ ( expr ) \} = cgen( expr )}
+\end{align*}
+
+\subsection*{Unary Operator}
+\begin{align*}
+    \texttt{cgen( op term ) } = & \texttt{ cgen(term) } \\
+    & \texttt{ op }
+\end{align*}
+
+\subsection*{Operator}
+\begin{align*}
+    \texttt{ cgen( term1 op term2 ) } = & \texttt{ cgen(term1) } \\
+    & \texttt{ cgen(term2) } \\
+    & \texttt{ op }
+\end{align*}
+
+
+\section*{Statement}
+
+\subsection*{let}
+\begin{align*}
+    \texttt{ cgen(let varName = expr ; ) } = & \texttt{ cgen(expr) } \\
+    & \texttt{ pop segment i}
+\end{align*}
+where \colorbox{bl}{segment i} is related to \texttt{varName}.
+
+
+\begin{align*}
+    \texttt{ cgen( let arr[expr1] = expr2 ; )} = & \texttt{ cgen(arr) } \\
+    & \texttt{ cgen(expr1) } \\
+    & \texttt{ add } \\
+    & \texttt{ cgen(expr2)} \\
+    & \texttt{ pop temp 0} \\
+    & \texttt{ pop pointer 1} \\
+    & \texttt{ push temp 0} \\
+    & \texttt{ pop that 0}
+\end{align*}
+
+
+\subsection*{if}
+\begin{align*}
+    \texttt{ cgen( if ( expr ) \{ statements \} )} = & \texttt{ cgen( expr )} \\
+    & \texttt{ if-goto \textit{label} } \\
+    & \texttt{ cgen( statements ) } \\
+    & \texttt{ label \textit{label} }
+\end{align*}
+
+\begin{align*}
+    \texttt{ cgen( if ( expr ) \{ statements1 \} else \{ statements2 \} ) } = & \texttt{ cgen( expr ) } \\
+    & \texttt{ if-goto \textit{else}} \\
+    & \texttt{ cgen( statements1 )} \\
+    & \texttt{ goto \textit{end} } \\
+    & \texttt{ label \textit{else} } \\
+    & \texttt{ cgen( statements2 ) } \\
+    & \texttt{ label \textit{end} }
+\end{align*}
+
+
+\subsection*{while}
+\begin{align*}
+    \texttt{ cgen( while (expr) \{ statements \} )} = & \texttt{ label \textit{begin} } \\
+    & \texttt{ cgen( expr )} \\
+    & \texttt{ if-goto \textit{end} } \\
+    & \texttt{ cgen( statements ) } \\
+    & \texttt{ goto \textit{begin} } \\
+    & \texttt{ label \texttt{end} }
+\end{align*}
+
+
+\subsection*{do}
+\begin{align*}
+    \texttt{ cgen( do subroutineCall ; )} = & \texttt{ cgen( subroutineCall )} \\
+    & \texttt{ pop temp 0 }
+\end{align*}
+
+
+\subsection*{return}
+\begin{align*}
+    \texttt{cgen( return ; )}  = & \texttt{ push constant 0} \\
+                            & \texttt{ return}
+\end{align*}
+
+\begin{align*}
+    \texttt{cgen( return expr; )} = & \texttt{ cgen(expr)} \\
+                             & \texttt{ return}
+\end{align*}
+
+\section*{Subroutine Declaration}
+
+
+\begin{align*}
+    \texttt{cgen} &
+    \left(
+        \begin{array}{l}
+            \texttt{constructor className subroutineName(parameters) \{ } \\
+            \texttt{~ ~varDec*} \\
+            \texttt{~ ~statements} \\
+            \texttt{\} }
+        \end{array}
+    \right) \\
+    = & \texttt{ function className.subroutineName nLocals} \\
+      & \texttt{ push constant 0} \\
+      & \texttt{ call Memory.alloc 1 } \\
+      & \texttt{ pop pointer 0 } \\
+      & \texttt{ cgen( statements )}
+\end{align*}
+where \texttt{className} is the class that \texttt{subroutineName} belong to.
+
+\begin{align*}
+    \texttt{cgen} &
+    \left(
+        \begin{array}{l}
+            \texttt{function type subroutineName(parameters) \{ } \\
+            \texttt{~ ~varDec*} \\
+            \texttt{~ ~statements} \\
+            \texttt{\} }
+        \end{array}
+    \right) \\
+    = & \texttt{ function className.subroutineName nLocals} \\
+      & \texttt{ cgen( statements )}
+\end{align*}
+where \texttt{className} is the class that \texttt{subroutineName} belong to.
+
+\begin{align*}
+    \texttt{cgen} &
+    \left(
+        \begin{array}{l}
+            \texttt{method type subroutineName(parameters) \{ } \\
+            \texttt{~ ~varDec*} \\
+            \texttt{~ ~statements} \\
+            \texttt{\} }
+        \end{array}
+    \right) \\
+    = & \texttt{ function className.subroutineName nLocals} \\
+      & \texttt{ push argument 0} \\
+      & \texttt{ pop pointer 0} \\
+      & \texttt{ cgen( statements )}
+\end{align*}
+where \texttt{className} is the class that \texttt{subroutineName} belong to.
+
 \end{document}
