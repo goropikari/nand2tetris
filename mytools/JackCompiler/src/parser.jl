@@ -100,7 +100,7 @@ struct SubroutineBody
 end
 
 struct SubroutineCall
-    obj
+    cl_obj
     name
     exprs
 end
@@ -444,10 +444,10 @@ end
 
 function subroutine_call(parser::Parser)
     if expect(parser, IDENTIFIER)
-        obj = nothing
+        cl_obj = nothing
         name = nothing
         if next(parser).enum == PERIOD
-            obj = current(parser)
+            cl_obj = current(parser)
             advance!(parser)
             advance!(parser)
             name = current(parser)
@@ -459,7 +459,7 @@ function subroutine_call(parser::Parser)
         exprs = expressions(parser)
         accept!(parser, RPAREN)
 
-        return SubroutineCall(obj, name, exprs)
+        return SubroutineCall(cl_obj, name, exprs)
     end
 end
 
@@ -731,8 +731,8 @@ function dump_xml(io::IO, ret::Return, depth)
     println(io, _space(depth) * "</returnStatement>")
 end
 function dump_xml(io::IO, call::SubroutineCall, depth)
-    if !isnothing(call.obj)
-        dump_xml(io, call.obj, depth)
+    if !isnothing(call.cl_obj)
+        dump_xml(io, call.cl_obj, depth)
         dump_sym(io, ".", depth)
     end
     dump_xml(io, call.name, depth)
