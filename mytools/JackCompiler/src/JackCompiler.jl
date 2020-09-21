@@ -139,6 +139,9 @@ import .Lexers: tokenize, dump
 include("parser.jl")
 import .Parsers: program
 
+# module CodeGenerator end
+include("code_generator.jl")
+
 function genxml(path)
     if isdir(path)
         files = readdir(path)
