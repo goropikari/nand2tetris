@@ -1,6 +1,6 @@
-module Tokenizer
+module Lexers
 
-import ..JackAnalyzer: Token, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
+import ..JackCompiler: Token, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
 export tokenize, dump
 
 struct TokenizeError <: Exception

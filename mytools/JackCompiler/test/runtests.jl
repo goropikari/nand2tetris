@@ -1,4 +1,4 @@
-import JackAnalyzer
+import JackCompiler
 
 using Test
 
@@ -21,9 +21,9 @@ using Test
     }
     """
 
-    l = JackAnalyzer.Tokenizer.tokenize(program)
+    l = JackCompiler.Lexers.tokenize(program)
     io = IOBuffer()
-    JackAnalyzer.Tokenizer.dump(io, l)
+    JackCompiler.Lexers.dump(io, l)
     expected = """<tokens>
     <keyword> class </keyword>
     <identifier> Main </identifier>
@@ -119,6 +119,6 @@ end
         }
     }
     """
-    x = JackAnalyzer.CompilationEngine.program(program)
-    JackAnalyzer.CompilationEngine.dump(stdout, x.parse_tree)
+    x = JackCompiler.Parsers.program(program)
+    JackCompiler.Parsers.dump(stdout, x.parse_tree)
 end

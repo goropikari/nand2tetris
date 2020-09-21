@@ -2,16 +2,16 @@ Test tokenizer
 ```bash
 # In julia container
 docker-compose run julia bash
-cd /home/julia/mytools/JackAnalyzer
+cd /home/julia/mytools/JackCompiler
 julia --project=.
 
-using JackAnalyzer
+using JackCompiler
 # Generate XML file. Main.jack -> MyMainT.xml
 function writefile(path)
     x = read(open(path), String)
-    l = JackAnalyzer.tokenize(x)
+    l = JackCompiler.tokenize(x)
     open(joinpath(dirname(path), "My" * basename(path)[1:end-5] * "T.xml"), "w") do fp
-        JackAnalyzer.dump(fp, l)
+        JackCompiler.dump(fp, l)
     end
 end
 
@@ -55,11 +55,11 @@ bash ~/tools/TextComparer.sh MainT.xml MyMainT.xml
 Test parser
 ```
 docker-compose run julia bash
-cd /home/julia/mytools/JackAnalyzer
+cd /home/julia/mytools/JackCompiler
 julia --project=.
-julia> JackAnalyzer.genxml("/home/julia/projects/10/ExpressionLessSquare/")
-julia> JackAnalyzer.genxml("/home/julia/projects/10/Square/")
-julia> JackAnalyzer.genxml("/home/julia/projects/10/ArrayTest/")
+julia> JackCompiler.genxml("/home/julia/projects/10/ExpressionLessSquare/")
+julia> JackCompiler.genxml("/home/julia/projects/10/Square/")
+julia> JackCompiler.genxml("/home/julia/projects/10/ArrayTest/")
 
 
 

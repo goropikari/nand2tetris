@@ -1,4 +1,4 @@
-module JackAnalyzer
+module JackCompiler
 export tokenize, dump
 
 @enum TokenType begin
@@ -131,13 +131,13 @@ function resolve_enum(val::AbstractString)
 end
 
 
-# module Tokenizer end
+# module Lexers end
 include("tokenizer.jl")
-import .Tokenizer: tokenize, dump
+import .Lexers: tokenize, dump
 
-# module CompilationEngine end
+# module Parsers end
 include("parser.jl")
-import .CompilationEngine: program
+import .Parsers: program
 
 function genxml(path)
     if isdir(path)
@@ -158,8 +158,8 @@ function _genxml(path)
     out = split(path, ".")[1] * "My.xml"
     println(out)
     open(out, "w") do fp
-        prog = JackAnalyzer.CompilationEngine.program(src)
-        JackAnalyzer.CompilationEngine.dump_xml(fp, prog.parse_tree)
+        prog = JackCompiler.Parsers.program(src)
+        JackCompiler.Parsers.dump_xml(fp, prog.parse_tree)
     end
 end
 

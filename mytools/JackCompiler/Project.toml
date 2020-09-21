@@ -1,4 +1,4 @@
-name = "JackAnalyzer"
+name = "JackCompiler"
 uuid = "0c1c8428-8657-47d3-891e-4b35857829e8"
 authors = ["goropikari <goropikari56@gmail.com>"]
 version = "0.1.0"

@@ -1,9 +1,9 @@
-module CompilationEngine
+module Parsers
 
-import ..Tokenizer
-import ..Tokenizer: dump
-import ..JackAnalyzer: Token, NothingToken, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
-import ..JackAnalyzer: TokenType,
+import ..Lexers
+import ..Lexers: dump
+import ..JackCompiler: Token, NothingToken, Keyword, Identifier, _Symbol, IntegerConstant, StringConstant, resolve_enum
+import ..JackCompiler: TokenType,
     IDENTIFIER,
     CLASS,
     CONSTRUCTOR,
@@ -203,7 +203,7 @@ function program(input::String)
 end
 function program(io::IO)
     input = read(io, String)
-    lexer = Tokenizer.tokenize(input)
+    lexer = Lexers.tokenize(input)
     parser = Parser(1, lexer.tokens, nothing, lexer.input)
     return program(parser)
 end
