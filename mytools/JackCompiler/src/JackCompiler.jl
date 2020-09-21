@@ -132,7 +132,7 @@ end
 
 
 # module Lexers end
-include("tokenizer.jl")
+include("lexer.jl")
 import .Lexers: tokenize, dump
 
 # module Parsers end
