@@ -1,6 +1,7 @@
 module CodeGenerators
 
-import ..JackCompiler: Keyword
+import ..JackCompiler: Keyword,
+    IntegerConstant
 import ..Parsers: Parser,
     Program,
     Class,
@@ -84,6 +85,7 @@ function cgen(io::IO, codegen::CodeGenerator, class::Class)
 
     for subr in class.subrdecs
         cgen(io, codegen, subr)
+        println(io)
     end
 end
 
@@ -99,24 +101,26 @@ function cgen(io::IO, codegen::CodeGenerator, subr::SubroutineDec)
     define = subr.deckw.val
     _header(io)
     if define == "constructor"
-        # println(io, "push constant 0")
-        print_const(io)
+        print_push_const(io)
         println(io, "call Memory.alloc 1")
         println(io, "pop pointer 0")
-        for stmt in subr.body.stmts
-            cgen(io, codegen, stmt)
-        end
     elseif define == "function"
+        # only cgen(statements)
     elseif define == "method"
+        print_push_arg(io)
+        print_pop_pointer(io)
     else
         error()
+    end
+    for stmt in subr.body.stmts
+        cgen(io, codegen, stmt)
     end
 end
 
 function cgen(io::IO, codegen::CodeGenerator, ret::Return)
     if isnothing(ret.expr)
         # println(io, "push constant 0")
-        print_const(io)
+        print_push_const(io)
     else
         cgen(io, codegen, ret.expr)
     end
@@ -127,9 +131,13 @@ function cgen(io::IO, codegen::CodeGenerator, term::Term)
     cgen(io, codegen, term.val)
 end
 
+function cgen(io::IO, codegen::CodeGenerator, int::IntegerConstant)
+    print_push_const(io, int.val)
+end
+
 function cgen(io::IO, codegen::CodeGenerator, kw::Keyword)
     if kw.val == "this"
-        print_const(io)
+        print_push_const(io)
     else # TODO
         error()
     end
@@ -177,6 +185,11 @@ function _count_localvar(subr::SubroutineDec)
     return nlocals
 end
 
-print_const(io, n=0) = println(io, "push constant $(n)")
+print_push(io, seg, n="0") = println(io, "push $(seg) $(n)")
+print_push_const(io, n="0") = print_push(io, "constant", n)
+print_push_arg(io, n="0") = print_push(io, "argument", n)
+
+print_pop(io, seg, n="0") = println(io, "pop $(seg) $(n)")
+print_pop_pointer(io, n="0") = print_pop(io, "pointer", n)
 
 end # module
