@@ -1,7 +1,8 @@
 module CodeGenerators
 
 import ..JackCompiler: Keyword,
-    IntegerConstant
+    IntegerConstant,
+    StringConstant
 import ..Parsers: Parser,
     Program,
     Class,
@@ -119,7 +120,6 @@ end
 
 function cgen(io::IO, codegen::CodeGenerator, ret::Return)
     if isnothing(ret.expr)
-        # println(io, "push constant 0")
         print_push_const(io)
     else
         cgen(io, codegen, ret.expr)
@@ -133,6 +133,17 @@ end
 
 function cgen(io::IO, codegen::CodeGenerator, int::IntegerConstant)
     print_push_const(io, int.val)
+end
+
+function cgen(io::IO, codegen::CodeGenerator, strconst::StringConstant)
+    str = strconst.val
+    len = length(str)
+    print_push_const(io, len)
+    println(io, "call String.new 1")
+    for c in str
+        print_push_const(io, Int(c))
+        println(io, "call String.appendChar 2")
+    end
 end
 
 function cgen(io::IO, codegen::CodeGenerator, kw::Keyword)
