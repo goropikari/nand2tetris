@@ -86,6 +86,9 @@ end
 function Base.keys(x::SubroutineSymbolTable)
     return keys(x.symtable)
 end
+function Base.values(x::ClassSymbolTable)
+    return values(x.symtable)
+end
 
 
 function cgen(io::IO, codegen::CodeGenerator)
@@ -116,7 +119,8 @@ function cgen(io::IO, codegen::CodeGenerator, subr::SubroutineDec)
     define = subr.deckw.val
     _header(io)
     if define == "constructor"
-        print_push_const(io)
+        numfield = _count_field(codegen.class_symtable)
+        print_push_const(io, numfield)
         println(io, "call Memory.alloc 1")
         println(io, "pop pointer 0")
     elseif define == "function"
@@ -281,6 +285,17 @@ function _count_localvar(subr::SubroutineDec)
         nlocals += length(vardec.vars)
     end
     return nlocals
+end
+
+function _count_field(symtb::ClassSymbolTable)
+    nfield = 0
+    for var in values(symtb.symtable)
+        # segment `this` correspond to `field` variables
+        if var.kind == "this"
+            nfield += 1
+        end
+    end
+    return nfield
 end
 
 function _varinfo(codegen::CodeGenerator, id)
