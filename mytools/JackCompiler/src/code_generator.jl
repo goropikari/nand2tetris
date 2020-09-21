@@ -146,10 +146,18 @@ function cgen(io::IO, codegen::CodeGenerator, strconst::StringConstant)
     end
 end
 
-function cgen(io::IO, codegen::CodeGenerator, kw::Keyword)
-    if kw.val == "this"
+function cgen(io::IO, codegen::CodeGenerator, keyword::Keyword)
+    kw = keyword.val
+    if kw == "true"
         print_push_const(io)
-    else # TODO
+        println(io, "neg")
+    elseif kw == "false"
+        print_push_const(io)
+    elseif kw == "null"
+        print_push_const(io)
+    elseif kw == "this"
+        print_push_const(io)
+    else
         error()
     end
 end
