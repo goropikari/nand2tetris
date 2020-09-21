@@ -743,12 +743,12 @@ where \colorbox{bl}{segment i} is related to \texttt{varName}.
         \end{array}
     \right) \\
     = & \texttt{ function className.subroutineName nLocals} \\
-      & \texttt{ push constant 0} \\
+      & \texttt{ push constant nFields} \\
       & \texttt{ call Memory.alloc 1 } \\
       & \texttt{ pop pointer 0 } \\
       & \texttt{ cgen( statements )}
 \end{align*}
-where \texttt{className} is the class that \texttt{subroutineName} belong to.
+where \texttt{className} is the class that \texttt{subroutineName} belong to and \texttt{nFields} is the number of field variable in the class.
 
 \begin{align*}
     \texttt{cgen} &
