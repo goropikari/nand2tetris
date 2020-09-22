@@ -707,6 +707,7 @@ where \colorbox{bl}{segment i} is related to \texttt{varName}.
 \begin{align*}
     \texttt{ cgen( while (expr) \{ statements \} )} = & \texttt{ label \textit{begin} } \\
     & \texttt{ cgen( expr )} \\
+    & \texttt{ not } \\
     & \texttt{ if-goto \textit{end} } \\
     & \texttt{ cgen( statements ) } \\
     & \texttt{ goto \textit{begin} } \\
