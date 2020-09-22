@@ -1,0 +1,35 @@
+class Main {
+    field int foo, bar, fuga;
+    static Array hage, hige;
+    field boolean a, b, c;
+
+    function void main() {
+        return ;
+    }
+
+    method int hoge(int x) {
+        var int a, b;
+        var Point p, q;
+        /* do Output.printInt(10); */
+        /* do p.print(100);             */
+        /* do fuga(10);                 */
+        /* do Main.hogehoge(p[a], 234); */
+        let a = 0;
+        while (a < 2) {
+            let a = a + 1;
+        }
+        return a;
+    }
+
+    function int hogehoge(int x, int y) {
+        return 100;
+    }
+
+    method Main fuga(int x) {
+        /* var int i; */
+        /* do hoge(i); */
+        /* do hoge(1, 2); */
+
+        return this;
+    }
+}
