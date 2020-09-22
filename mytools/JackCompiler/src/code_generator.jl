@@ -140,6 +140,24 @@ function cgen(io::IO, codegen::CodeGenerator, subr::SubroutineDec)
     end
 end
 
+
+function cgen(io::IO, codegen::CodeGenerator, _let::Let)
+    if isnothing(_let.arr_idx)
+        cgen(io, codegen, _let.expr)
+        info::Variable = _varinfo(codegen, _let.var.val)
+        print_pop(io, info.kind, info.number)
+    else
+        cgen(io, codegen, _let.var)
+        cgen(io, codegen, _let.arr_idx)
+        println(io, "add")
+        cgen(io, codegen, _let.expr)
+        print_pop_temp(io)
+        print_pop_pointer(io, "1")
+        print_push_temp(io)
+        print_pop(io, "that", "0")
+    end
+end
+
 function cgen(io::IO, codegen::CodeGenerator, _do::Do)
     cgen(io, codegen, _do.subr)
     print_pop_temp(io)
@@ -197,15 +215,15 @@ end
 
 function cgen(io::IO, codegen::CodeGenerator, ident::Identifier)
     id = ident.val
-    varinfo::Variable = _varinfo(codegen, id)
-    print_push(io, varinfo.kind, varinfo.number)
+    info::Variable = _varinfo(codegen, id)
+    print_push(io, info.kind, info.number)
 end
 
 function cgen(io::IO, codegen::CodeGenerator, arr::_Array)
     cgen(io, codegen, arr.idx)
     id = arr.var.val
-    varinfo::Variable = _varinfo(codegen, id)
-    print_push(io, varinfo.kind, varinfo.number)
+    info::Variable = _varinfo(codegen, id)
+    print_push(io, info.kind, info.number)
     println(io, "add")
     print_pop_pointer(io, "1")
     print_push_that(io)
@@ -384,6 +402,7 @@ print_push_const(io, n="0") = print_push(io, "constant", n)
 print_push_arg(io, n="0") = print_push(io, "argument", n)
 print_push_that(io, n="0") = print_push(io, "that", n)
 print_push_pointer(io, n="0") = print_push(io, "pointer", n)
+print_push_temp(io, n="0") = print_push(io, "temp", n)
 
 print_pop(io, seg, n="0") = println(io, "pop $(seg) $(n)")
 print_pop_temp(io, n="0") = print_pop(io, "temp", n)
