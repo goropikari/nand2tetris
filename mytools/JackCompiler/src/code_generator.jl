@@ -248,7 +248,7 @@ function cgen(io::IO, codegen::CodeGenerator, keyword::Keyword)
     elseif kw == "null"
         print_push_const(io)
     elseif kw == "this"
-        print_push_const(io)
+        print_push_pointer(io)
     else
         error()
     end
