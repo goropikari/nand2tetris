@@ -166,5 +166,28 @@ function _genxml(path)
     end
 end
 
+function compile(path)
+    if isdir(path)
+        files = readdir(path)
+        jackfiles = filter(x -> occursin(r".jack$", x), files)
+        for file in jackfiles
+            _compile(joinpath(path, file))
+        end
+    elseif occursin(r".jack$", path)
+        _compile(path)
+    end
+end
+function _compile(path)
+    src = open(path, "r") do fp
+        read(fp, String)
+    end
+    out = split(path, ".")[1] * ".vm"
+    println(out)
+    open(out, "w") do fp
+        parser = JackCompiler.Parsers.program(src)
+        codegen = JackCompiler.CodeGenerators.CodeGenerator(parser)
+        JackCompiler.CodeGenerators.cgen(fp, codegen)
+    end
+end
 
 end # module
