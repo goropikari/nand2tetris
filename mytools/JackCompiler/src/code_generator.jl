@@ -23,7 +23,8 @@ import ..Parsers: Parser,
     Parenthesis,
     UnaryOp,
     _Array,
-    Operator
+    Operator,
+    _Symbol
 
 
 mutable struct CodeGenerator
@@ -155,6 +156,12 @@ end
 
 function cgen(io::IO, codegen::CodeGenerator, term::Term)
     cgen(io, codegen, term.val)
+end
+
+function cgen(io::IO, codegen::CodeGenerator, op::Operator)
+    cgen(io, codegen, op.left)
+    cgen(io, codegen, op.right)
+    print_op(io, op.op)
 end
 
 function cgen(io::IO, codegen::CodeGenerator, int::IntegerConstant)
@@ -381,5 +388,21 @@ print_push_pointer(io, n="0") = print_push(io, "pointer", n)
 print_pop(io, seg, n="0") = println(io, "pop $(seg) $(n)")
 print_pop_temp(io, n="0") = print_pop(io, "temp", n)
 print_pop_pointer(io, n="0") = print_pop(io, "pointer", n)
+
+function print_op(io, op::_Symbol)
+    op_str = op.val
+    opdict = Dict(
+        "+" => "add",
+        "-" => "sub",
+        "*" => "call Math.multiply 2",
+        "/" => "call Math.divide 2",
+        "&" => "and",
+        "|" => "or",
+        "<" => "lt",
+        ">" => "gt",
+        "=" => "eq"
+    )
+    println(io, opdict[op_str])
+end
 
 end # module
