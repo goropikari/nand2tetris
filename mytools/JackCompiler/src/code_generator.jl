@@ -139,6 +139,11 @@ function cgen(io::IO, codegen::CodeGenerator, subr::SubroutineDec)
     end
 end
 
+function cgen(io::IO, codegen::CodeGenerator, _do::Do)
+    cgen(io, codegen, _do.subr)
+    print_pop_temp(io)
+end
+
 function cgen(io::IO, codegen::CodeGenerator, ret::Return)
     if isnothing(ret.expr)
         print_push_const(io)
@@ -197,6 +202,45 @@ function cgen(io::IO, codegen::CodeGenerator, arr::_Array)
     println(io, "add")
     print_pop_pointer(io, "1")
     print_push_that(io)
+end
+
+function cgen(io::IO, codegen::CodeGenerator, subrcall::SubroutineCall)
+    class_name = ""
+    cl_obj_name = ""
+    isobj = false
+    if isnothing(subrcall.cl_obj)
+        class_name = codegen.class_name
+    else
+        cl_obj_name = subrcall.cl_obj.val
+        isobj = (cl_obj_name in keys(codegen.class_symtable) ||
+                 cl_obj_name in keys(codegen.subroutine_symtable))
+    end
+    subroutine_name = subrcall.name.val
+    nargs = length(subrcall.exprs)
+
+    if isnothing(subrcall.cl_obj)  # subroutine(exprs)
+        nargs += 1
+        print_push_pointer(io)
+    elseif !isobj  # classname.subroutine(exprs)
+        class_name = subrcall.cl_obj.val
+    elseif isobj  # obj.subroutine(exprs)
+        # Update class_name
+        class_name = if cl_obj_name in keys(codegen.subroutine_symtable)
+            codegen.subroutine_symtable[cl_obj_name].type
+        elseif cl_obj_name in keys(codegen.class_symtable)
+            codegen.class_symtable[cl_obj_name].type
+        else
+            error()
+        end
+        cgen(io, codegen, subrcall.cl_obj)
+        nargs += 1
+    else
+        error()
+    end
+    for expr in subrcall.exprs
+        cgen(io, codegen, expr)
+    end
+    println(io, "call $(class_name).$(subroutine_name) $(nargs)")
 end
 
 function _register_classvar!(symtb::ClassSymbolTable, class::Class)
@@ -314,8 +358,10 @@ print_push(io, seg, n="0") = println(io, "push $(seg) $(n)")
 print_push_const(io, n="0") = print_push(io, "constant", n)
 print_push_arg(io, n="0") = print_push(io, "argument", n)
 print_push_that(io, n="0") = print_push(io, "that", n)
+print_push_pointer(io, n="0") = print_push(io, "pointer", n)
 
 print_pop(io, seg, n="0") = println(io, "pop $(seg) $(n)")
+print_pop_temp(io, n="0") = print_pop(io, "temp", n)
 print_pop_pointer(io, n="0") = print_pop(io, "pointer", n)
 
 end # module
