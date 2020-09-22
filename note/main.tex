@@ -684,6 +684,7 @@ where \colorbox{bl}{segment i} is related to \texttt{varName}.
 \subsection*{if}
 \begin{align*}
     \texttt{ cgen( if ( expr ) \{ statements \} )} = & \texttt{ cgen( expr )} \\
+    & \texttt{ not } \\
     & \texttt{ if-goto \textit{label} } \\
     & \texttt{ cgen( statements ) } \\
     & \texttt{ label \textit{label} }
@@ -691,6 +692,7 @@ where \colorbox{bl}{segment i} is related to \texttt{varName}.
 
 \begin{align*}
     \texttt{ cgen( if ( expr ) \{ statements1 \} else \{ statements2 \} ) } = & \texttt{ cgen( expr ) } \\
+    & \texttt{ not } \\
     & \texttt{ if-goto \textit{else}} \\
     & \texttt{ cgen( statements1 )} \\
     & \texttt{ goto \textit{end} } \\
@@ -699,6 +701,7 @@ where \colorbox{bl}{segment i} is related to \texttt{varName}.
     & \texttt{ label \textit{end} }
 \end{align*}
 
+\texttt{if-goto} jumps when top most stack value is not 0.
 
 \subsection*{while}
 \begin{align*}
