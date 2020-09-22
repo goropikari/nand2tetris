@@ -1,6 +1,9 @@
 module CodeGenerators
 
 LABEL_ID = 0
+function _set_label_id(x)
+    global LABEL_ID = x
+end
 
 import ..JackCompiler: IntegerConstant,
     StringConstant,
