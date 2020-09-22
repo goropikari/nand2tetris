@@ -243,6 +243,12 @@ function cgen(io::IO, codegen::CodeGenerator, subrcall::SubroutineCall)
     println(io, "call $(class_name).$(subroutine_name) $(nargs)")
 end
 
+function cgen(io::IO, codegen::CodeGenerator, paren::Parenthesis)
+    cgen(io, codegen, paren.val)
+end
+
+
+
 function _register_classvar!(symtb::ClassSymbolTable, class::Class)
     for vardec in class.vardecs
         kind = vardec.deckw.val
