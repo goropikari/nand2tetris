@@ -184,6 +184,21 @@ function cgen(io::IO, codegen::CodeGenerator, _if::If)
     end
 end
 
+function cgen(io::IO, codegen::CodeGenerator, _while::While)
+    label_uniq_id = LABEL_ID
+    global LABEL_ID += 1
+    println(io, "label BEGIN$(label_uniq_id)")
+
+    cgen(io, codegen, _while.cond)
+    println(io, "not")
+    println(io, "if-goto END$(label_uniq_id)")
+    for stmt in _while.stmts
+        cgen(io, codegen, stmt)
+    end
+    println(io, "goto BEGIN$(label_uniq_id)")
+    println(io, "label END$(label_uniq_id)")
+end
+
 function cgen(io::IO, codegen::CodeGenerator, _do::Do)
     cgen(io, codegen, _do.subr)
     print_pop_temp(io)
