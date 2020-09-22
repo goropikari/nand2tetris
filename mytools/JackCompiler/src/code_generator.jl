@@ -1,5 +1,7 @@
 module CodeGenerators
 
+LABEL_ID = 0
+
 import ..JackCompiler: IntegerConstant,
     StringConstant,
     Keyword,
@@ -140,7 +142,6 @@ function cgen(io::IO, codegen::CodeGenerator, subr::SubroutineDec)
     end
 end
 
-
 function cgen(io::IO, codegen::CodeGenerator, _let::Let)
     if isnothing(_let.arr_idx)
         cgen(io, codegen, _let.expr)
@@ -155,6 +156,31 @@ function cgen(io::IO, codegen::CodeGenerator, _let::Let)
         print_pop_pointer(io, "1")
         print_push_temp(io)
         print_pop(io, "that", "0")
+    end
+end
+
+function cgen(io::IO, codegen::CodeGenerator, _if::If)
+    label_uniq_id = LABEL_ID
+    global LABEL_ID += 1
+    cgen(io, codegen, _if.cond)
+    println(io, "not")
+    if isempty(_if.else_stmts) # if( cond ) { stmts }
+        println(io, "if-goto END$(label_uniq_id)")
+        for stmt in _if.then_stmts
+            cgen(io, codegen, stmt)
+        end
+        println(io, "label END$(label_uniq_id)")
+    else # if ( cond ) { stmts } else { stmts }
+        println(io, "if-goto ELSE$(label_uniq_id)")
+        for stmt in _if.then_stmts
+            cgen(io, codegen, stmt)
+        end
+        println(io, "goto END$(label_uniq_id)")
+        println(io, "label ELSE$(label_uniq_id)")
+        for stmt in _if.else_stmts
+            cgen(io, codegen, stmt)
+        end
+        println(io, "label END$(label_uniq_id)")
     end
 end
 
@@ -201,7 +227,7 @@ function cgen(io::IO, codegen::CodeGenerator, keyword::Keyword)
     kw = keyword.val
     if kw == "true"
         print_push_const(io)
-        println(io, "neg")
+        println(io, "not")
     elseif kw == "false"
         print_push_const(io)
     elseif kw == "null"
