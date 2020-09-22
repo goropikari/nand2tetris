@@ -247,6 +247,18 @@ function cgen(io::IO, codegen::CodeGenerator, paren::Parenthesis)
     cgen(io, codegen, paren.val)
 end
 
+function cgen(io::IO, codegen::CodeGenerator, unaryop::UnaryOp)
+    cgen(io, codegen, unaryop.expr)
+    if unaryop.op.val == "-"
+        println(io, "neg")
+    elseif unaryop.op.val == "~"
+        println(io, "not")
+    else
+        error()
+    end
+end
+
+
 
 
 function _register_classvar!(symtb::ClassSymbolTable, class::Class)
