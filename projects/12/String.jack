@@ -11,54 +11,121 @@
  * string-oriented operations.
  */
 class String {
+    field Array str;
+    field int len;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        if (maxLength = 0) {
+            let str = Array.new(1);
+        } else {
+            let str = Array.new(maxLength);
+        }
+        let len = 0;
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        do str.dispose();
+        do Memory.deAlloc(this);
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return len;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return str[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        let str[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        let str[len] = c;
+        let len = len + 1;
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        let len = len - 1;
+        return;
     }
 
-    /** Returns the integer value of this string, 
+    /** Returns the integer value of this string,
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int sum, i, sign;
+        var boolean loop;
+        let sum = 0;
+        let i = 0;
+        let sign = 1;
+        let loop = true;
+        if (charAt(0) = 45) {
+            let sign = -1;
+            let i = 1;
+        }
+        while ((i < len) & loop) {
+            if ((str[i] < 48) | (str[i] > 57)) {
+                let loop = false;
+            } else {
+                let sum = sum * 10 + (str[i] - 48);
+            }
+            let i = i + 1;
+        }
+        return sign * sum;
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        var int n;
+        let n = val;
+        let len = 0;
+        if (val < 0) {
+            let str[0] = 45;
+            let len = 1;
+            let n = - val;
+        }
+        do int2str(n);
+        return;
+    }
+
+    method void int2str(int val) {
+        var int n, r, c;
+        let n = val;
+        let r = n - ((n / 10) * 10);
+        let c = r + 48;
+        if (n < 10) {
+            do appendChar(c);
+        } else {
+            do int2str(n/10);
+            do appendChar(c);
+        }
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
