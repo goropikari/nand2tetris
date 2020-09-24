@@ -96,7 +96,7 @@ class Math {
             let twoqy = 0;
             return 0;
         }
-        let q = Math.divide(x, (y+y));
+        let q = Math._divide(x, (y+y));
         if ((x - twoqy) < y) {
             return q + q;
         } else {
