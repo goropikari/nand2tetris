@@ -8,12 +8,20 @@
  * Note: Jack compilers implement multiplication and division using OS method calls.
  */
 class Math {
-    static Array twoToThe;
+    static Array powerTwo;
+    static int twoqy;
 
     /** Initializes the library. */
     function void init() {
-        let twoToThe = Array.new(16);
-
+        var int i, power;
+        let powerTwo = Array.new(16);
+        let i = 0;
+        let power = 1;
+        while (i < 16) {
+            let powerTwo[i] = power;
+            let power = power + power;
+            let i = i + 1;
+        }
         return;
     }
 
@@ -32,6 +40,21 @@ class Math {
      *  the Jack expressions x*y and multiply(x,y) return the same value.
      */
     function int multiply(int x, int y) {
+        var int i, sum, shiftedX, mask;
+        let i = 0;
+        let sum = 0;
+        let shiftedX = x;
+        let mask = 1;
+        while (i < 16) {
+            if ( ~((y & mask) = 0) ) {
+                let sum = sum + shiftedX;
+            }
+            let mask = mask + mask;
+            let shiftedX = shiftedX + shiftedX;
+            let i = i + 1;
+        }
+
+        return sum;
     }
 
     /** Returns the integer part of x/y.
@@ -40,10 +63,61 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
+        var int a, b, div;
+        var boolean plus;
+        let a = Math.abs(x);
+        let b = Math.abs(y);
+
+        let plus = true;
+        if ((x < 0) & (y < 0)) {
+            let plus = true;
+        }
+        if ((x > 0) & (y < 0)) {
+            let plus = false;
+        }
+        if ((x < 0) & (y > 0)) {
+            let plus = false;
+        }
+        if ((x > 0) & (y > 0)) {
+            let plus = true;
+        }
+
+        let div = Math._divide(a, b);
+        if (plus) {
+            return div;
+        } else {
+            return -div;
+        }
+    }
+
+    function int _divide(int x, int y) {
+        var int q;
+        if ((y > x) | (y < 0)){
+            let twoqy = 0;
+            return 0;
+        }
+        let q = Math.divide(x, (y+y));
+        if ((x - twoqy) < y) {
+            return q + q;
+        } else {
+            let twoqy = twoqy + y;
+            return q + q + 1;
+        }
     }
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
+        var int y, i, sq;
+        let y = 0;
+        let i = 8;
+        while (i > -1) {
+            let sq = (y + powerTwo[i]) * (y + powerTwo[i]);
+            if (((sq < x) | (sq = x)) & (sq > 0)) {
+                let y = y + powerTwo[i];
+            }
+            let i = i - 1;
+        }
+        return y;
     }
 
     /** Returns the greater number. */
