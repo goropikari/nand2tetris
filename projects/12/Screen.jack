@@ -10,34 +10,158 @@
  * the screen is indexed (0,0).
  */
 class Screen {
+    static boolean color;
+    static Array twoToThe;
 
     /** Initializes the Screen. */
     function void init() {
+        var int i;
+        let color = true;
+        let twoToThe = Array.new(16);
+        let i = 1;
+        let twoToThe[0] = 1;
+        while (i < 16) {
+            let twoToThe[i] = twoToThe[i-1] + twoToThe[i-1];
+            let i = i + 1;
+        }
+
+        return;
+    }
+
+    function int mod(int x, int m) {
+        var int q, r;
+        let q = x / m;
+        let r = x - (q * m);
+        return r;
     }
 
     /** Erases the entire screen. */
     function void clearScreen() {
+        var int i;
+        let i = 16384;
+        while (i < 24576) {
+            do Memory.poke(i, 0);
+        }
+        return;
     }
 
     /** Sets the current color, to be used for all subsequent drawXXX commands.
      *  Black is represented by true, white by false. */
     function void setColor(boolean b) {
+        let color = b;
+        return;
     }
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
+        var int num, k, pic;
+        let num = 16384 + (y * 32) + (x / 16);
+        let k = Screen.mod(x, 16);
+        if (color) {
+            let pic = twoToThe[k] | Memory.peek(num);
+        } else {
+            let pic = (~(twoToThe[k])) & Memory.peek(num);
+        }
+        do Memory.poke(num, pic);
+        return;
     }
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
+        var int lx, ly, dx, dy;
+        if (x1 = x2) {
+            do Screen._vertical(x1, y1, y2);
+        } else {
+            if (y1 = y2) {
+                do Screen._horizontal(x1, x2, y1);
+            } else {
+                if (x1 < x2) {
+                    let lx = x1;
+                    let ly = y1;
+                    let dx = x2 - x1;
+                    let dy = y2 - y1;
+                } else {
+                    let lx = x2;
+                    let ly = y2;
+                    let dx = x1 - x2;
+                    let dy = y1 - y2;
+                }
+                do Screen._drawLine(lx, ly, dx, dy);
+            }
+        }
+        return;
+    }
+
+    function void _vertical(int x, int y1, int y2) {
+        var int inc, cnt, i, by;
+        let i = 0;
+        let by = y1;
+        if (y1 < y2) {
+            let inc = 1;
+        } else {
+            let inc = -1;
+        }
+        let cnt = Math.abs(y1 - y2) + 1;
+        while (i < cnt) {
+            do Screen.drawPixel(x, by);
+            let by = by + inc;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    function void _horizontal(int x1, int x2, int y) {
+        var int inc, cnt, i, lx;
+        let i = 0;
+        let lx = x1;
+        if (x1 < x2) {
+            let inc = 1;
+        } else {
+            let inc = -1;
+        }
+        let cnt = Math.abs(x1 - x2) + 1;
+        while (i < cnt) {
+            do Screen.drawPixel(lx, y);
+            let lx = lx + inc;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    function void _drawLine(int lx, int ly, int dx, int dy) {
+        var int a, b;
+        let a = 0;
+        let b = 0;
+        if (dy > 0) {
+            while ((~(a > dx)) & (~(b > dy))) { // a <= dx, b <= dy
+                do Screen.drawPixel(lx + a, ly + b);
+                if ((b * dx) > (a * dy)) {
+                    let a = a + 1;
+                } else {
+                    let b = b + 1;
+                }
+            }
+        } else {
+            while ( (~(a > dx)) & (~(b < dy)) ) { // a <= dx & b >= dy
+                do Screen.drawPixel(lx + a, ly + b);
+                if ((b * dx) > (a * dy)) {
+                    let b = b - 1;
+                } else {
+                    let a = a + 1;
+                }
+            }
+        }
+        return;
     }
 
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        return;
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+        return;
     }
 }
