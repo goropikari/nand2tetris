@@ -10,50 +10,322 @@
  * the screen is indexed (0,0).
  */
 class Screen {
+    static boolean color;
+    static Array twoToThe, leftLine, rightLine;
 
     /** Initializes the Screen. */
     function void init() {
+        var int i;
+        let color = true;
+        
+        let twoToThe = Array.new(16);
+        let twoToThe[0] = 1;
+        let i = 1;
+        while (i < 16) {
+            let twoToThe[i] = twoToThe[i-1] + twoToThe[i-1];
+            let i = i + 1;
+        }
+
+        let leftLine = Array.new(17);
+        let rightLine = Array.new(17);
+        let i = 1;
+        while (i < 17) {
+            let leftLine[i] = leftLine[i-1] | twoToThe[i-1];
+            let rightLine[i] = rightLine[i-1] | twoToThe[16-i];
+            let i = i + 1;
+        }
+        let leftLine[0] = 0;
+        let rightLine[0] = 0;
         return;
     }
 
     /** Erases the entire screen. */
     function void clearScreen() {
+        var int i;
+        let i = 16384;
+        while (i < 24575) { // 24575 = 16384 + 8191
+            do Memory.poke(i, 0);
+            let i = i + 1;
+        }
         return;
     }
 
     /** Sets the current color, to be used for all subsequent drawXXX commands.
      *  Black is represented by true, white by false. */
     function void setColor(boolean b) {
+        let color = b;
         return;
     }
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
-        var int num, k, pic;
-        let num = 16384 + (y * 32) + (x / 16);
-        let k = Screen.mod(x, 16);
-        if (color) {
-            let pic = twoToThe[k] | Memory.peek(num);
-        } else {
-            let pic = (~(twoToThe[k])) & Memory.peek(num);
-        }
-        do Memory.poke(num, pic);
+        var int r, addr;
+        let r = Screen.mod(x, 16);
+        let addr = Screen.pos2addr(x, y);
+        do Screen.setVal(addr, twoToThe[r]);
         return;
     }
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
+        if (x1 = x2) {
+            do Screen.drawVertical(x1, y1, y2);
+            return;
+        }
+        if (y1 = y2) {
+            do Screen.drawHorizontal(x1, x2, y1);
+            return;
+        } 
+        
+        do Screen.drawSlope(x1, y1, x2, y2);
+        return;
+    }
+
+    function void drawVertical(int x, int y1, int y2) {
+        var int addr, bottom, top, i, dist, r;
+        let bottom = Math.min(y1, y2);
+        let top = Math.max(y1, y2);
+        let addr = Screen.pos2addr(x, bottom);
+        let dist = top - bottom + 1;
+        let r = Screen.mod(x, 16);
+        let i = 0;
+        while (i < dist) {
+            do Screen.setVal(addr, twoToThe[r]);
+            let i = i + 1;
+            let addr = addr + 32;
+        }
+        return;
+    }
+    function void drawHorizontal(int x1, int x2, int y) {
+        do Screen.drawRectangle(x1, y, x2, y);
+        return;
+    }
+
+    function int segmentVal(int start, int n) {
+        var int val, s;
+        let s = Math.max(Screen.mod(start, 16), 0);
+        let val = leftLine[n+s];
+        return val & (~leftLine[s]);
+    }
+
+    function void drawSlope(int x1, int y1, int x2, int y2) {
+        var int a, b, lx, ly, dx, dy;
+        if (x1 < x2) {
+            let lx = x1;
+            let ly = y1;
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+        } else {
+            let lx = x2;
+            let ly = y2;
+            let dx = x1 - x2;
+            let dy = y1 - y2;
+        }
+        let a = 0;
+        let b = 0;
+        if (dy > 0) {
+            while ((~(a > dx)) & (~(b > dy))) { // a <= dx, b <= dy
+                do Screen.drawPixel(lx + a, ly + b);
+                if ((b * dx) > (a * dy)) {
+                    let a = a + 1;
+                } else {
+                    let b = b + 1;
+                }
+            }
+        } else {
+            while ( (~(a > dx)) & (~(b < dy)) ) { // a <= dx & b >= dy
+                do Screen.drawPixel(lx + a, ly + b);
+                if ((b * dx) > (a * dy)) {
+                    let b = b - 1;
+                } else {
+                    let a = a + 1;
+                }
+            }
+        }
         return;
     }
 
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int lx, rx, by, ty, ml, mr, val, addr, nextmodzero, i;
+        let lx = Math.min(x1, x2);
+        let rx = Math.max(x1, x2);
+        let by = Math.min(y1, y2);
+        let ty = Math.max(y1, y2);
+        let nextmodzero = lx + 16 - Screen.mod(lx, 16);
+        if ( rx < nextmodzero ) {
+            let val = Screen.segmentVal(lx, (rx - lx + 1));
+            let addr = Screen.pos2addr(lx, by);
+            while (~(by > ty)) {
+                do Screen.setVal(addr, val);
+                let addr = addr + 32;
+                let by = by + 1;
+            }
+            return;
+        }
+        // do Screen.drawLeftRectangle(x1, y1, x2, y2);
+        // do Screen.drawMiddleRectangle(x1, y1, x2, y2);
+        // do Screen.drawrightRectangle(x1, y1, x2, y2);
+        do Screen.drawLeftRectangle(lx, by, rx, ty);
+        do Screen.drawMiddleRectangle(lx, by, rx, ty);
+        do Screen.drawrightRectangle(lx, by, rx, ty);   
         return;
     }
 
+    function void drawLeftRectangle(int x1, int y1, int x2, int y2) {
+        var int X1, Xl1, num, ri, cnt, r, c, val, addr, lx, rx, by, ty;
+        let lx = x1;
+        let rx = x2;
+        let by = y1;
+        let ty = y2;
+        if (Screen.mod(lx, 16) = 0) {
+            return;
+        } else {
+            let X1 = lx + (16 - (Screen.mod(lx, 16)));
+        }
+        let Xl1 = lx - Screen.mod(lx, 16);
+        let c = Xl1 / 16;
+        let r = 32 * by;
+        // let num = X1 - lx + 1;
+        let num = X1 - lx;
+        let ri = by;
+        let cnt = ty - by + 1;
+        while (~(ri > ty)) {
+            let addr = 16384 + r + c;
+            let val = Memory.peek(addr);
+            if (color) { 
+                do Memory.poke(addr, val | rightLine[num]);
+            } else {
+                do Memory.poke(addr, val & (~rightLine[num]));
+            }
+            let r = r + 32;
+            let ri = ri + 1;
+        }
+        return;        
+    }
+
+    function void drawMiddleRectangle(int x1, int y1, int x2, int y2) {
+        var int X1, X2, ncol, ri, ci, r, c, addr;
+        if (Screen.mod(x1, 16) = 0) {
+            let X1 = x1;
+        } else {
+            let X1 = x1 + (16 - (Screen.mod(x1, 16)));
+        }
+        if (Screen.mod(x2, 16) = 15) {
+            let X2 = x2;
+        } else {
+            let X2 = x2 - (Screen.mod(x2, 16) + 1);
+        }
+        let ncol = (X2 - X1 + 1) / 16;
+
+        let r = y1 * 32;
+        let c = X1 / 16;
+        let ri = y1;
+
+        while (~(ri > y2)) {
+            let ci = 0;
+            let c = X1 / 16;
+            while (ci < ncol) {
+                let addr = 16384 + r + c;
+                do Memory.poke(addr, color);
+                let c = c + 1;
+                let ci = ci + 1;
+            }
+            let ri = ri + 1;
+            let r = r + 32;
+        }
+        return;
+    }
+
+    function void drawrightRectangle(int x1, int y1, int x2, int y2) {
+        var int X2, Xl2, num, ri, cnt, r, c, val, addr, lx, rx, by, ty;
+        let lx = x1;
+        let rx = x2;
+        let by = y1;
+        let ty = y2;
+
+        if (Screen.mod(rx, 16) = 15) {
+            return;
+        } else {
+            let Xl2 = rx - Screen.mod(rx, 16);
+        }
+        let c = Xl2 / 16;
+        let r = 32 * by;
+        let num = rx - Xl2 + 1;
+        let ri = by;
+        let cnt = ty - by + 1;
+        while (~(ri > ty)) {
+            let addr = 16384 + r + c;
+            let val = Memory.peek(addr);
+            if (color) {
+                do Memory.poke(addr, val | leftLine[num]);
+            } else {
+                do Memory.poke(addr, val & (~leftLine[num]));
+            }
+            let r = r + 32;
+            let ri = ri + 1;
+        }
+        return;
+    }       
+
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+        var int dy, rsq, adj, dysq, yplus, yminus, r_half;
+
+        let r_half = r / 2;
+        let dy = r_half;
+        let rsq = r * r;
+
+        if (r > 181) {
+            return;
+        }
+        while (~(dy > r)) {
+            let dysq = dy * dy;
+            let adj = Math.sqrt(rsq - dysq);
+            let yplus = y + dy;
+            let yminus = y - dy;
+            do Screen.drawRectangle(x - adj, yplus, x + adj, yplus);
+            do Screen.drawRectangle(x - adj, yminus, x + adj, yminus);
+            let dy = dy + 1;
+        }
+        do Screen.drawRectangle(x - r_half, y - r_half, x + r_half, y + r_half);
+        let dy = 0;
+        while (~(dy > r_half)) {
+            let dysq = dy * dy;
+            let adj = Math.sqrt(rsq - dysq);
+            let yplus = y + dy;
+            let yminus = y - dy;
+            do Screen.drawRectangle(x - adj, yplus, x - r_half, yplus);
+            do Screen.drawRectangle(x - adj, yminus, x - r_half, yminus);
+            do Screen.drawRectangle(x + r_half, yplus, x + adj, yplus);
+            do Screen.drawRectangle(x + r_half, yminus, x + adj, yminus);
+            let dy = dy + 1;
+        }
         return;
+    }
+
+    function void setVal(int addr, int val) {
+        var int prev;
+        let prev = Memory.peek(addr);
+        if (color) {
+            do Memory.poke(addr, prev | val);
+        } else {
+            do Memory.poke(addr, prev & ~val);
+        }
+        return;
+    }
+
+    function int pos2addr(int x, int y) {
+        var int q, r;
+        let q = x / 16;
+        let r = x - (16 * q); // reminder
+        return 16384 + (32 * y) + q;
+    }
+
+    function int mod(int x, int m) {
+        var int q;
+        let q = x / m;
+        return x - (m * q);
     }
 }
