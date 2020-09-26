@@ -11,7 +11,7 @@
  */
 class Screen {
     static boolean color;
-    static Array twoToThe;
+    static Array twoToThe, leftRect, RightRect;
 
     /** Initializes the Screen. */
     function void init() {
@@ -25,6 +25,19 @@ class Screen {
             let i = i + 1;
         }
 
+        let leftRect = Array.new(16);
+        let i = 15;
+        while (i > 0) {
+            let leftRect[15 - i + 1] = leftRect[15-i] | twoToThe[i];
+            let i = i - 1;
+        }
+
+        let RightRect = Array.new(16);
+        let i = 1;
+        while (i < 16) {
+            let RightRect[i] = RightRect[i-1] | twoToThe[i-1];
+            let i = i + 1;
+        }
         return;
     }
 
@@ -111,21 +124,30 @@ class Screen {
     }
 
     function void _horizontal(int x1, int x2, int y) {
-        var int inc, cnt, i, lx;
-        let i = 0;
-        let lx = x1;
+        var int lx, rx, dist;
         if (x1 < x2) {
-            let inc = 1;
+            let lx = x1;
+            let rx = x2;
         } else {
-            let inc = -1;
+            let lx = x2;
+            let rx = x1;
         }
-        let cnt = Math.abs(x1 - x2) + 1;
-        while (i < cnt) {
-            do Screen.drawPixel(lx, y);
-            let lx = lx + inc;
-            let i = i + 1;
+        let dist = Math.abs(x1 - x2) + 1;
+        while (~(lx > rx)) { // lx <= rx
+            if ((Screen.mod(lx, 16) = 0) & (~((lx + 15) > rx)) ) {
+                // lx + 15 <= rx
+                do Memory.poke(Screen._addr(lx, y), color);
+                let lx = lx + 16;
+            } else {
+                do Screen.drawPixel(lx, y);
+                let lx = lx + 1;
+            }
         }
         return;
+    }
+
+    function int _addr(int x, int y) {
+        return 16384 + (y * 32) + (x / 16);
     }
 
     function void _drawLine(int lx, int ly, int dx, int dy) {
@@ -157,6 +179,96 @@ class Screen {
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        do Screen.drawLeftRectangle(x1, y1, x2, y2);
+        do Screen.drawMiddleRectangle(x1, y1, x2, y2);
+        do Screen.drawRightRectangle(x1, y1, x2, y2);
+        return;
+    }
+
+    function void drawLeftRectangle(int x1, int y1, int x2, int y2) {
+        var int X1, Xl1, num, ri, cnt, r, c, val, addr;
+        if (Screen.mod(x1, 16) = 0) {
+            return;
+        } else {
+            let X1 = x1 + (16 - (Screen.mod(x1, 16)));
+        }
+        let Xl1 = x1 - Screen.mod(x1, 16);
+        let c = Xl1 / 16;
+        let r = 32 * y1;
+        let num = X1 - x1 + 1;
+        let ri = y1;
+        let cnt = y2 - y1 + 1;
+        while (~(ri > y2)) {
+            let addr = 16384 + r + c;
+            let val = Memory.peek(addr);
+            if (color) { 
+                do Memory.poke(addr, val | leftRect[num]);
+            } else {
+                do Memory.poke(addr, val & (~leftRect[num]));
+            }
+            let r = r + 32;
+            let ri = ri + 1;
+        }
+        return;
+    }
+
+    function void drawMiddleRectangle(int x1, int y1, int x2, int y2) {
+        var int X1, X2, ncol, ri, ci, r, c, addr;
+        if (Screen.mod(x1, 16) = 0) {
+            let X1 = x1;
+        } else {
+            let X1 = x1 + (16 - (Screen.mod(x1, 16)));
+        }
+        if (Screen.mod(x2, 16) = 15) {
+            let X2 = x2;
+        } else {
+            let X2 = x2 - (Screen.mod(x2, 16) + 1);
+        }
+        let ncol = (X2 - X1 + 1) / 16;
+
+        let r = y1 * 32;
+        let c = X1 / 16;
+        let ri = y1;
+
+        while (~(ri > y2)) {
+            let ci = 0;
+            let c = X1 / 16;
+            while (ci < ncol) {
+                let addr = 16384 + r + c;
+                do Memory.poke(addr, color);
+                let c = c + 1;
+                let ci = ci + 1;
+            }
+            let ri = ri + 1;
+            let r = r + 32;
+        }
+        return;
+    }
+
+    function void drawRightRectangle(int x1, int y1, int x2, int y2) {
+        var int X2, Xl2, num, ri, cnt, r, c, val, addr;
+        if (Screen.mod(x2, 16) = 15) {
+            return;
+        } else {
+            let Xl2 = x2 - Screen.mod(x2, 16);
+        }
+        // let Xl1 = x1 - Screen.mod(x1, 16);
+        let c = Xl2 / 16;
+        let r = 32 * y1;
+        let num = x2 - Xl2 + 1;
+        let ri = y1;
+        let cnt = y2 - y1 + 1;
+        while (~(ri > y2)) {
+            let addr = 16384 + r + c;
+            let val = Memory.peek(addr);
+            if (color) {
+                do Memory.poke(addr, val | RightRect[num]);
+            } else {
+                do Memory.poke(addr, val & (~RightRect[num]));
+            }
+            let r = r + 32;
+            let ri = ri + 1;
+        }
         return;
     }
 
