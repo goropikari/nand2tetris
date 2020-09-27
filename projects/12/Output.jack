@@ -206,19 +206,30 @@ class Output {
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
         var Array arr;
-        var int x, y;
+        var int x, y, addr, shift, val;
+        if (c = 128) { // newline
+            do Output.println();
+            return;
+        }
+        if (c = 129) { // backspace
+            do Output.backSpace();
+            return;
+        }
         let arr = Output.getMap(c);
         let y = 0;
+        let addr = 16384 + (11 * 32 * cury) + ((curx * 8) / 16);
+        if ((curx & 1) = 1) { // odd number
+            let shift = 256;
+        } else {
+            let shift = 1;
+        }
         while (y < 11) {
-            let x = 0;
-            while (x < 8) {
-                do Screen.setColor(Output.isone(arr[y], x));
-                do Screen.drawPixel((curx * 8) + x, (cury * 11) + y);
-                let x = x + 1;
-            }
+            let val = Memory.peek(addr);
+            do Memory.poke(addr, val | (arr[y] * shift));
+            let addr = addr + 32;
             let y = y + 1;
         }
-        do Output.advanceCursor();
+        do Output.advanceCursor();        
         return;
     }
 
@@ -277,6 +288,7 @@ class Output {
 
     /** Moves the cursor one column back. */
     function void backSpace() {
+        var int x, y, pos, addr, val;
         if (curx > 0) {
             let curx = curx - 1;
         } else {
@@ -285,6 +297,20 @@ class Output {
                 let cury = cury - 1;
             }
         }
-        return;
+
+        let y = 0;
+        let addr = 16384 + (11 * 32 * cury) + ((curx * 8) / 16);
+        if ((curx & 1) = 1) { // odd number, right
+            let pos = 255;
+        } else {
+            let pos = -256;
+        }
+        while (y < 11) {
+            let val = Memory.peek(addr);
+            do Memory.poke(addr, val & pos);
+            let addr = addr + 32;
+            let y = y + 1;
+        }
+        return;        
     }
 }
